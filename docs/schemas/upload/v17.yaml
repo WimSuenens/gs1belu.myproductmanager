@@ -1,0 +1,584 @@
+openapi: 3.0.1
+info:
+  title: My Product Manager Upload API
+  version: v17
+servers:
+  - url: https://api.gs1belu.org/myproductmanager/upload/v17
+paths:
+  /tradeitems:
+    post:
+      tags:
+        - TradeItem
+      summary: Upload single trade item
+      description: Idempotent upload for a single trade item. This operation will insert a new trade item when not existing or will update the existing trade item.
+      operationId: upsert-tradeitem
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/tradeItem'
+            example:
+              gtin: string
+              isConsumerUnit: true
+              unitDescriptorCode: string
+              informationProvider:
+                gln: string
+                partyName: string
+              countriesOfSale:
+                - string
+              tradeItemDescriptions:
+                - languageCode: string
+                  value: string
+              brandName: string
+              referencedFiles:
+                - uniformResourceIdentifier: string
+                  fileFormatName: string
+                  referencedFileTypeCode: string
+                  fileName: string
+                  languageCodes:
+                    - string
+                  fileEffectiveStartDateTime: string
+              brandOwner:
+                gln: string
+                partyName: string
+              nextLowerLevelTradeItems:
+                - gtin: string
+                  quantity: 0
+              tradeItemClassification:
+                gpcCategoryCode: string
+              tradeItemMeasurements:
+                netContents:
+                  - value: 0
+                    measurementUnitCode: string
+              synchronisationDates:
+                lastChangeDateTime: string
+                discontinuedDateTime: string
+      responses:
+        '201':
+          description: Success
+          headers:
+            Location:
+              description: The URI where the created or updated trade item can be found
+              schema:
+                type: string
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/validationResult'
+              example:
+                status: 0
+                details:
+                  - severity: string
+                    code: string
+                    message: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/problemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+                extensions: { }
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/problemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+                extensions: { }
+  '/tradeitems/{gtin}':
+    get:
+      tags:
+        - TradeItem
+      summary: Retrieve single trade item
+      description: Retrieve a single trade item identified by its GTIN.
+      operationId: get-tradeitem
+      parameters:
+        - name: gtin
+          in: path
+          description: Trade item identifier
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tradeItem'
+              example:
+                gtin: string
+                isConsumerUnit: true
+                unitDescriptorCode: string
+                informationProvider:
+                  gln: string
+                  partyName: string
+                countriesOfSale:
+                  - string
+                tradeItemDescriptions:
+                  - languageCode: string
+                    value: string
+                brandName: string
+                referencedFiles:
+                  - uniformResourceIdentifier: string
+                    fileFormatName: string
+                    referencedFileTypeCode: string
+                    fileName: string
+                    languageCodes:
+                      - string
+                    fileEffectiveStartDateTime: string
+                brandOwner:
+                  gln: string
+                  partyName: string
+                nextLowerLevelTradeItems:
+                  - gtin: string
+                    quantity: 0
+                tradeItemClassification:
+                  gpcCategoryCode: string
+                tradeItemMeasurements:
+                  netContents:
+                    - value: 0
+                      measurementUnitCode: string
+                synchronisationDates:
+                  lastChangeDateTime: string
+                  discontinuedDateTime: string
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/problemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+                extensions: { }
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/problemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+                extensions: { }
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/problemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+                extensions: { }
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/problemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+                extensions: { }
+components:
+  schemas:
+    problemDetails:
+      type: object
+      properties:
+        type:
+          type: string
+          nullable: true
+        title:
+          type: string
+          nullable: true
+        status:
+          type: integer
+          format: int32
+          nullable: true
+        detail:
+          type: string
+          nullable: true
+        instance:
+          type: string
+          nullable: true
+        extensions:
+          type: object
+          additionalProperties:
+            type: object
+          nullable: true
+          readOnly: true
+    validationResult:
+      type: object
+      properties:
+        status:
+          type: integer
+        details:
+          type: array
+          items:
+            required:
+              - severity
+              - code
+              - message
+            type: object
+            properties:
+              severity:
+                type: string
+              code:
+                type: string
+              message:
+                type: string
+    description:
+      required:
+        - languageCode
+        - value
+      type: object
+      properties:
+        languageCode:
+          pattern: '[a-z]{2}-[A-Z]{2}'
+          type: string
+        value:
+          type: string
+    description35:
+      required:
+        - languageCode
+        - value
+      type: object
+      properties:
+        languageCode:
+          pattern: '[a-z]{2}-[A-Z]{2}'
+          type: string
+        value:
+          maxLength: 35
+          type: string
+    description70:
+      required:
+        - languageCode
+        - value
+      type: object
+      properties:
+        languageCode:
+          pattern: '[a-z]{2}-[A-Z]{2}'
+          type: string
+        value:
+          maxLength: 70
+          type: string
+    description80:
+      required:
+        - languageCode
+        - value
+      type: object
+      properties:
+        languageCode:
+          pattern: '[a-z]{2}-[A-Z]{2}'
+          type: string
+        value:
+          maxLength: 80
+          type: string
+    description200:
+      required:
+        - languageCode
+        - value
+      type: object
+      properties:
+        languageCode:
+          pattern: '[a-z]{2}-[A-Z]{2}'
+          type: string
+        value:
+          maxLength: 200
+          type: string
+    description500:
+      required:
+        - languageCode
+        - value
+      type: object
+      properties:
+        languageCode:
+          pattern: '[a-z]{2}-[A-Z]{2}'
+          type: string
+        value:
+          maxLength: 500
+          type: string
+    description1000:
+      required:
+        - languageCode
+        - value
+      type: object
+      properties:
+        languageCode:
+          pattern: '[a-z]{2}-[A-Z]{2}'
+          type: string
+        value:
+          maxLength: 1000
+          type: string
+    description2500:
+      required:
+        - languageCode
+        - value
+      type: object
+      properties:
+        languageCode:
+          pattern: '[a-z]{2}-[A-Z]{2}'
+          type: string
+        value:
+          maxLength: 2500
+          type: string
+    description4000:
+      required:
+        - languageCode
+        - value
+      type: object
+      properties:
+        languageCode:
+          pattern: '[a-z]{2}-[A-Z]{2}'
+          type: string
+        value:
+          maxLength: 4000
+          type: string
+    description5000:
+      required:
+        - languageCode
+        - value
+      type: object
+      properties:
+        languageCode:
+          pattern: '[a-z]{2}-[A-Z]{2}'
+          type: string
+        value:
+          maxLength: 5000
+          type: string
+    formattedDescription:
+      required:
+        - languageCode
+        - value
+      type: object
+      properties:
+        languageCode:
+          pattern: '[a-z]{2}-[A-Z]{2}'
+          type: string
+        value:
+          type: string
+        sequenceNumber:
+          type: integer
+    formattedDescription250:
+      required:
+        - languageCode
+        - value
+      type: object
+      properties:
+        languageCode:
+          pattern: '[a-z]{2}-[A-Z]{2}'
+          type: string
+        value:
+          maxLength: 250
+          type: string
+        sequenceNumber:
+          type: integer
+    formattedDescription500:
+      required:
+        - languageCode
+        - value
+      type: object
+      properties:
+        languageCode:
+          pattern: '[a-z]{2}-[A-Z]{2}'
+          type: string
+        value:
+          maxLength: 500
+          type: string
+        sequenceNumber:
+          type: integer
+    formattedDescription4000:
+      required:
+        - languageCode
+        - value
+      type: object
+      properties:
+        languageCode:
+          pattern: '[a-z]{2}-[A-Z]{2}'
+          type: string
+        value:
+          maxLength: 4000
+          type: string
+        sequenceNumber:
+          type: integer
+    formattedDescription5000:
+      required:
+        - languageCode
+        - value
+      type: object
+      properties:
+        languageCode:
+          pattern: '[a-z]{2}-[A-Z]{2}'
+          type: string
+        value:
+          maxLength: 5000
+          type: string
+        sequenceNumber:
+          type: integer
+    measurement:
+      required:
+        - value
+        - measurementUnitCode
+      type: object
+      properties:
+        value:
+          type: number
+        measurementUnitCode:
+          type: string
+    currency:
+      required:
+        - value
+        - currencyCode
+      type: object
+      properties:
+        value:
+          type: number
+        currencyCode:
+          type: string
+    party:
+      required:
+        - gln
+      type: object
+      properties:
+        gln:
+          pattern: '[0-9]{13}'
+          type: string
+        partyName:
+          type: string
+    tradeItem:
+      required:
+        - gtin
+        - isConsumerUnit
+        - unitDescriptorCode
+        - informationProvider
+        - tradeItemClassification
+        - countriesOfSale
+        - brandName
+      type: object
+      properties:
+        gtin:
+          pattern: '[0-9]([0-1]|[3-9])([0-9]{12})'
+          type: string
+        isConsumerUnit:
+          type: boolean
+        unitDescriptorCode:
+          type: string
+        informationProvider:
+          $ref: '#/components/schemas/party'
+        countriesOfSale:
+          minItems: 1
+          type: array
+          items:
+            type: string
+        tradeItemDescriptions:
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/description200'
+        brandName:
+          maxLength: 70
+          type: string
+        referencedFiles:
+          minItems: 1
+          type: array
+          items:
+            required:
+              - uniformResourceIdentifier
+              - referencedFileTypeCode
+            type: object
+            properties:
+              uniformResourceIdentifier:
+                maxLength: 2500
+                type: string
+              fileFormatName:
+                maxLength: 35
+                type: string
+              referencedFileTypeCode:
+                type: string
+              fileName:
+                maxLength: 70
+                type: string
+              languageCodes:
+                minItems: 1
+                type: array
+                items:
+                  type: string
+              fileEffectiveStartDateTime:
+                type: string
+                format: date-time
+        brandOwner:
+          $ref: '#/components/schemas/party'
+        nextLowerLevelTradeItems:
+          minItems: 1
+          type: array
+          items:
+            type: object
+            properties:
+              gtin:
+                type: string
+              quantity:
+                type: integer
+        tradeItemClassification:
+          required:
+            - gpcCategoryCode
+          type: object
+          properties:
+            gpcCategoryCode:
+              type: string
+        tradeItemMeasurements:
+          type: object
+          properties:
+            netContents:
+              minItems: 1
+              type: array
+              items:
+                $ref: '#/components/schemas/measurement'
+        synchronisationDates:
+          type: object
+          properties:
+            lastChangeDateTime:
+              type: string
+              format: date-time
+            discontinuedDateTime:
+              type: string
+              format: date-time
+  securitySchemes:
+    apiKeyHeader:
+      type: apiKey
+      name: Ocp-Apim-Subscription-Key
+      in: header
+    apiKeyQuery:
+      type: apiKey
+      name: subscription-key
+      in: query
+security:
+  - apiKeyHeader: [ ]
+  - apiKeyQuery: [ ]

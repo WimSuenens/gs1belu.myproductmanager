@@ -1,0 +1,547 @@
+openapi: 3.0.1
+info:
+  title: My Product Manager Download API
+  description: The purpose of this API is to give data recipients access to product information stored in the ‘My product Manager’ application of GS1 Belgium & Luxembourg. <br>The product information within this system is created by the information providers (often the brand owners of the products). They define which information is available for the data recipients.
+  version: v17
+servers:
+  - url: https://api.gs1belu.org/myproductmanager/download/v17
+paths:
+  /tradeitems:
+    get:
+      tags:
+        - TradeItem
+      summary: Retrieve all data available.
+      description: Extra filters can optionally be added to limit the datat set returned. <br>Result will be limited to pages of 1000 items. Paging response will be in HAL format.
+      operationId: get-tradeitems
+      parameters:
+        - name: informationProviderGLN
+          in: query
+          description: A worldwide unique 13 digit number that identifies the party who is providing the product information.
+          schema:
+            type: string
+        - name: since
+          in: query
+          description: Format - date-time (as date-time in RFC3339). Format - date-time (as date-time in RFC3339). Filter to select only tradeitems changed since this date.
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          description: An ID for the next page.
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Format - int32. The number of tradeitems shown in the next page.
+          schema:
+            type: number
+        - name: gtin
+          in: query
+          description: The GTIN of one or more tradeItems.
+          schema:
+            type: string
+        - name: brandOwnerDefault
+          in: query
+          description: Select only tradeitems of which the brandower is the information provider. This limits the number of returned tradeitems to 1 when filtering on gtin.
+          schema:
+            type: boolean
+        - name: isDiscontinued
+          in: query
+          description: Filter to select only tradeitems which are or are not discontinued.
+          schema:
+            type: boolean
+        - name: countriesOfSale
+          in: query
+          description: Filter to select only tradeitems which are sold in the given country of sale.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tradeItemResponse'
+              example:
+                _links:
+                  next:
+                    href: string
+                _embedded:
+                  tradeItems:
+                    - gtin: string
+                      isConsumerUnit: true
+                      unitDescriptorCode: string
+                      informationProvider:
+                        gln: string
+                        partyName: string
+                      countriesOfSale:
+                        - string
+                      tradeItemDescriptions:
+                        - languageCode: string
+                          value: string
+                      brandName: string
+                      referencedFiles:
+                        - uniformResourceIdentifier: string
+                          fileFormatName: string
+                          referencedFileTypeCode: string
+                          fileName: string
+                          languageCodes:
+                            - string
+                          fileEffectiveStartDateTime: string
+                      brandOwner:
+                        gln: string
+                        partyName: string
+                      nextLowerLevelTradeItems:
+                        - gtin: string
+                          quantity: 0
+                      tradeItemClassification:
+                        gpcCategoryCode: string
+                      tradeItemMeasurements:
+                        netContents:
+                          - value: 0
+                            measurementUnitCode: string
+                      synchronisationDates:
+                        lastChangeDateTime: string
+                        discontinuedDateTime: string
+                      metaData:
+                        modified:
+                          date: string
+                        created:
+                          date: string
+                        status: string
+                        isDiscontinued: true
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/problemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/problemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/problemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+components:
+  schemas:
+    problemDetails:
+      type: object
+      properties:
+        type:
+          type: string
+          nullable: true
+        title:
+          type: string
+          nullable: true
+        status:
+          type: integer
+          format: int32
+          nullable: true
+        detail:
+          type: string
+          nullable: true
+        instance:
+          type: string
+          nullable: true
+      additionalProperties:
+        type: object
+    tradeItemResponse:
+      type: object
+      properties:
+        _links:
+          type: object
+          properties:
+            next:
+              type: object
+              properties:
+                href:
+                  type: string
+              additionalProperties: false
+          additionalProperties: false
+        _embedded:
+          type: object
+          properties:
+            tradeItems:
+              type: array
+              items:
+                $ref: '#/components/schemas/tradeItem'
+          additionalProperties: false
+      additionalProperties: false
+    description:
+      required:
+        - languageCode
+        - value
+      type: object
+      properties:
+        languageCode:
+          pattern: '[a-z]{2}-[A-Z]{2}'
+          type: string
+        value:
+          type: string
+    description35:
+      required:
+        - languageCode
+        - value
+      type: object
+      properties:
+        languageCode:
+          pattern: '[a-z]{2}-[A-Z]{2}'
+          type: string
+        value:
+          maxLength: 35
+          type: string
+    description70:
+      required:
+        - languageCode
+        - value
+      type: object
+      properties:
+        languageCode:
+          pattern: '[a-z]{2}-[A-Z]{2}'
+          type: string
+        value:
+          maxLength: 70
+          type: string
+    description80:
+      required:
+        - languageCode
+        - value
+      type: object
+      properties:
+        languageCode:
+          pattern: '[a-z]{2}-[A-Z]{2}'
+          type: string
+        value:
+          maxLength: 80
+          type: string
+    description200:
+      required:
+        - languageCode
+        - value
+      type: object
+      properties:
+        languageCode:
+          pattern: '[a-z]{2}-[A-Z]{2}'
+          type: string
+        value:
+          maxLength: 200
+          type: string
+    description500:
+      required:
+        - languageCode
+        - value
+      type: object
+      properties:
+        languageCode:
+          pattern: '[a-z]{2}-[A-Z]{2}'
+          type: string
+        value:
+          maxLength: 500
+          type: string
+    description1000:
+      required:
+        - languageCode
+        - value
+      type: object
+      properties:
+        languageCode:
+          pattern: '[a-z]{2}-[A-Z]{2}'
+          type: string
+        value:
+          maxLength: 1000
+          type: string
+    description2500:
+      required:
+        - languageCode
+        - value
+      type: object
+      properties:
+        languageCode:
+          pattern: '[a-z]{2}-[A-Z]{2}'
+          type: string
+        value:
+          maxLength: 2500
+          type: string
+    description4000:
+      required:
+        - languageCode
+        - value
+      type: object
+      properties:
+        languageCode:
+          pattern: '[a-z]{2}-[A-Z]{2}'
+          type: string
+        value:
+          maxLength: 4000
+          type: string
+    description5000:
+      required:
+        - languageCode
+        - value
+      type: object
+      properties:
+        languageCode:
+          pattern: '[a-z]{2}-[A-Z]{2}'
+          type: string
+        value:
+          maxLength: 5000
+          type: string
+    formattedDescription:
+      required:
+        - languageCode
+        - value
+      type: object
+      properties:
+        languageCode:
+          pattern: '[a-z]{2}-[A-Z]{2}'
+          type: string
+        value:
+          type: string
+        sequenceNumber:
+          type: integer
+    formattedDescription250:
+      required:
+        - languageCode
+        - value
+      type: object
+      properties:
+        languageCode:
+          pattern: '[a-z]{2}-[A-Z]{2}'
+          type: string
+        value:
+          maxLength: 250
+          type: string
+        sequenceNumber:
+          type: integer
+    formattedDescription500:
+      required:
+        - languageCode
+        - value
+      type: object
+      properties:
+        languageCode:
+          pattern: '[a-z]{2}-[A-Z]{2}'
+          type: string
+        value:
+          maxLength: 500
+          type: string
+        sequenceNumber:
+          type: integer
+    formattedDescription4000:
+      required:
+        - languageCode
+        - value
+      type: object
+      properties:
+        languageCode:
+          pattern: '[a-z]{2}-[A-Z]{2}'
+          type: string
+        value:
+          maxLength: 4000
+          type: string
+        sequenceNumber:
+          type: integer
+    formattedDescription5000:
+      required:
+        - languageCode
+        - value
+      type: object
+      properties:
+        languageCode:
+          pattern: '[a-z]{2}-[A-Z]{2}'
+          type: string
+        value:
+          maxLength: 5000
+          type: string
+        sequenceNumber:
+          type: integer
+    measurement:
+      required:
+        - value
+        - measurementUnitCode
+      type: object
+      properties:
+        value:
+          type: number
+        measurementUnitCode:
+          type: string
+    currency:
+      required:
+        - value
+        - currencyCode
+      type: object
+      properties:
+        value:
+          type: number
+        currencyCode:
+          type: string
+    party:
+      required:
+        - gln
+      type: object
+      properties:
+        gln:
+          pattern: '[0-9]{13}'
+          type: string
+        partyName:
+          type: string
+    tradeItem:
+      required:
+        - gtin
+        - isConsumerUnit
+        - unitDescriptorCode
+        - informationProvider
+        - tradeItemClassification
+        - countriesOfSale
+        - brandName
+      type: object
+      properties:
+        gtin:
+          pattern: '[0-9]([0-1]|[3-9])([0-9]{12})'
+          type: string
+        isConsumerUnit:
+          type: boolean
+        unitDescriptorCode:
+          type: string
+        informationProvider:
+          $ref: '#/components/schemas/party'
+        countriesOfSale:
+          minItems: 1
+          type: array
+          items:
+            type: string
+        tradeItemDescriptions:
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/description200'
+        brandName:
+          maxLength: 70
+          type: string
+        referencedFiles:
+          minItems: 1
+          type: array
+          items:
+            required:
+              - uniformResourceIdentifier
+              - referencedFileTypeCode
+            type: object
+            properties:
+              uniformResourceIdentifier:
+                maxLength: 2500
+                type: string
+              fileFormatName:
+                maxLength: 35
+                type: string
+              referencedFileTypeCode:
+                type: string
+              fileName:
+                maxLength: 70
+                type: string
+              languageCodes:
+                minItems: 1
+                type: array
+                items:
+                  type: string
+              fileEffectiveStartDateTime:
+                type: string
+                format: date-time
+        brandOwner:
+          $ref: '#/components/schemas/party'
+        nextLowerLevelTradeItems:
+          minItems: 1
+          type: array
+          items:
+            type: object
+            properties:
+              gtin:
+                type: string
+              quantity:
+                type: integer
+        tradeItemClassification:
+          required:
+            - gpcCategoryCode
+          type: object
+          properties:
+            gpcCategoryCode:
+              type: string
+        tradeItemMeasurements:
+          type: object
+          properties:
+            netContents:
+              minItems: 1
+              type: array
+              items:
+                $ref: '#/components/schemas/measurement'
+        synchronisationDates:
+          type: object
+          properties:
+            lastChangeDateTime:
+              type: string
+              format: date-time
+            discontinuedDateTime:
+              type: string
+              format: date-time
+        metaData:
+          required:
+            - modified
+            - created
+            - status
+          type: object
+          properties:
+            modified:
+              type: object
+              properties:
+                date:
+                  type: string
+                  format: date-time
+            created:
+              type: object
+              properties:
+                date:
+                  type: string
+                  format: date-time
+            status:
+              type: string
+            isDiscontinued:
+              type: boolean
+  securitySchemes:
+    apiKeyHeader:
+      type: apiKey
+      name: Ocp-Apim-Subscription-Key
+      in: header
+    apiKeyQuery:
+      type: apiKey
+      name: subscription-key
+      in: query
+security:
+  - apiKeyHeader: [ ]
+  - apiKeyQuery: [ ]
+tags:
+  - name: TradeItem
+    externalDocs:
+      description: TODO?
+      url: http://swagger.io/
