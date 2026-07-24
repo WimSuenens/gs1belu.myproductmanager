@@ -1,0 +1,15 @@
+{
+  "name": "kiota-spike-ts",
+  "comment": "PROTOTYPE — throwaway build harness for the Kiota spike (wayfinder #6). Not shipped.",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@microsoft/kiota-bundle": "1.0.0-preview.103",
+    "@microsoft/kiota-abstractions": "1.0.0-preview.103",
+    "@microsoft/kiota-serialization-form": "1.0.0-preview.103",
+    "@microsoft/kiota-serialization-json": "1.0.0-preview.103",
+    "@microsoft/kiota-serialization-multipart": "1.0.0-preview.103",
+    "@microsoft/kiota-serialization-text": "1.0.0-preview.103"
+  },
+  "devDependencies": { "typescript": "^5.6.0" }
+}

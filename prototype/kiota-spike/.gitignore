@@ -1,0 +1,5 @@
+# PROTOTYPE build artifacts — regenerate via README "Reproduce" section
+node_modules/
+bin/
+obj/
+package-lock.json
