@@ -1,0 +1,102 @@
+name: CI
+
+# The repo's merge gate. Branch protection on `main` requires exactly ONE status
+# check: `ci-gate` (see §5 of the layout decision, issue #14). Everything else in
+# this file exists to feed that aggregator.
+#
+# IMPORTANT — why the workflow is NOT path-filtered at the trigger level:
+# a top-level `on.pull_request.paths:` filter would skip the *entire* workflow for,
+# say, a docs-only PR. `ci-gate` would then never report, and a required check that
+# never reports blocks the PR forever. So the workflow runs on every PR, and the
+# path filtering happens PER JOB via the `changes` detector below. That way
+# `ci-gate` always runs and always reports, while the real jobs skip when their
+# paths are untouched.
+#
+# ---------------------------------------------------------------------------
+# APPEND-A-JOB CONTRACT (read this before adding a job)
+# ---------------------------------------------------------------------------
+# Later specs add per-artifact jobs (`dotnet`, `typescript`, `mcp`, `regen-sync`
+# — see #14 §5) without redesigning the gate. To add one:
+#   1. Add a filter for its paths under the `changes` job's `filters:`.
+#   2. Define the job, gated with `if: needs.changes.outputs.<filter> == 'true'`.
+#   3. Add the job's name to `ci-gate.needs`.
+# That is the whole ritual — ci-gate iterates every job in `needs`, so a new job is
+# picked up automatically with no edit to the assert step (no list to forget to
+# update, so a failing job can never be silently dropped from the gate).
+# Branch protection never changes — it only ever references `ci-gate`.
+# ---------------------------------------------------------------------------
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  # `dorny/paths-filter` reads a PR's changed-file list via the GitHub API on
+  # pull_request events; without this it fails with "Resource not accessible by
+  # integration". Read-only, and no effect on push events.
+  pull-requests: read
+
+jobs:
+  # Detect which areas of the repo a change touched, so downstream jobs can skip
+  # cleanly when their paths are untouched. This is the per-job path filter that
+  # replaces a (deadlock-prone) workflow-level `paths:` filter.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      schemas: ${{ steps.filter.outputs.schemas }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            schemas:
+              - 'schemas/**'
+
+  # CI face of the dead-patch guard (#7). Runs ONLY when schemas/** changed. It
+  # reuses the existing local seam (`just test` -> the scripts/tests suite) rather
+  # than re-implementing overlay assertion, so CI and local can never disagree
+  # about what "the overlays still apply" means.
+  schema-assert:
+    needs: changes
+    if: needs.changes.outputs.schemas == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Install just
+        uses: extractions/setup-just@v2
+      - name: Assert overlays still apply (schema-prep suite)
+        run: just test
+
+  # THE SINGLE REQUIRED CHECK. Runs always() so it can always report a status.
+  # Green iff every needed job SUCCEEDED or was SKIPPED; red iff any needed job
+  # genuinely failed or was cancelled. A path-filtered job that never ran counts
+  # as a pass — that is the "succeeded-or-skipped" rule (#14 §5, user story 6).
+  ci-gate:
+    if: always()
+    needs: [changes, schema-assert]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Assert no needed job failed
+        env:
+          # The full result map of every job in `needs`, as JSON. Passed via env
+          # (not inlined into the script) so the assert step is self-maintaining:
+          # it reads whatever jobs `needs` lists, with nothing to keep in sync.
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          echo "Needed job results:"
+          echo "$NEEDS" | jq -r 'to_entries[] | "  \(.key): \(.value.result)"'
+          failed=$(echo "$NEEDS" | jq -r '
+            to_entries[]
+            | select(.value.result != "success" and .value.result != "skipped")
+            | .key')
+          if [ -n "$failed" ]; then
+            echo "::error::ci-gate: needed job(s) did not pass: $(echo "$failed" | tr "\n" " ")"
+            exit 1
+          fi
+          echo "ci-gate: all needed jobs succeeded or were skipped."
