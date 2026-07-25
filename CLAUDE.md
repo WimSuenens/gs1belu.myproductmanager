@@ -1,6 +1,6 @@
 # gs1belu.myproductmanager
 
-Tooling to consume the GS1 Belgium & Luxembourg **My Product Manager** REST APIs (Upload + Download, v17) — generated SDKs and an MCP server built from the OpenAPI schemas under `docs/schemas/`.
+Tooling to consume the GS1 Belgium & Luxembourg **My Product Manager** REST APIs (Upload + Download, v17) — generated SDKs and an MCP server built from the OpenAPI schemas under `schemas/`.
 
 ## Agent skills
 
