@@ -47,6 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       schemas: ${{ steps.filter.outputs.schemas }}
+      sdks: ${{ steps.filter.outputs.sdks }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -55,6 +56,8 @@ jobs:
           filters: |
             schemas:
               - 'schemas/**'
+            sdks:
+              - 'sdks/**'
 
   # CI face of the dead-patch guard (#7). Runs ONLY when schemas/** changed. It
   # reuses the existing local seam (`just test` -> the scripts/tests suite) rather
@@ -73,13 +76,102 @@ jobs:
       - name: Assert overlays still apply (schema-prep suite)
         run: just test
 
+  # C# SDK build (#31/#33). Generates fresh clients (never assumes the git-ignored
+  # effective spec is present) then builds the multi-targeted solution.
+  dotnet:
+    needs: changes
+    if: needs.changes.outputs.sdks == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Install just
+        uses: extractions/setup-just@v2
+      - name: Install pinned Kiota CLI
+        run: |
+          dotnet tool install --global Microsoft.OpenApi.Kiota --version "$(cat sdks/kiota.version)"
+          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+      - name: Generate clients (just gen)
+        run: just gen
+      - name: Build C# SDK
+        run: dotnet build sdks/dotnet/Gs1Belu.MyProductManager.sln
+
+  # TypeScript SDK build (#31/#34). Generates fresh clients then type-checks the
+  # ESM-only workspace (quarantined generated/ tsconfig contains the Experimental-
+  # Kiota @ts-ignore noise; this is a type-check, not a publish build).
+  typescript:
+    needs: changes
+    if: needs.changes.outputs.sdks == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Install just
+        uses: extractions/setup-just@v2
+      - name: Install pinned Kiota CLI
+        run: |
+          dotnet tool install --global Microsoft.OpenApi.Kiota --version "$(cat sdks/kiota.version)"
+          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+      - name: Generate clients (just gen)
+        run: just gen
+      - name: Install TypeScript workspace deps
+        run: npm --prefix sdks/typescript ci
+      - name: Type-check TypeScript SDK
+        run: npm --prefix sdks/typescript run build
+
+  # SDK analog of the schema-prep dead-patch guard (#7). Regenerates all four
+  # clients fresh and fails if the working tree differs from what's committed —
+  # a Kiota upgrade or a schema/overlay change is then a deliberate, reviewed PR
+  # diff, never a silently drifting client. Gated on sdks/** OR schemas/** because
+  # the effective spec is git-ignored: a schema-only change can reshape a client
+  # with no sdks/** diff to trigger on.
+  regen-sync:
+    needs: changes
+    if: needs.changes.outputs.sdks == 'true' || needs.changes.outputs.schemas == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Install just
+        uses: extractions/setup-just@v2
+      - name: Install pinned Kiota CLI
+        run: |
+          dotnet tool install --global Microsoft.OpenApi.Kiota --version "$(cat sdks/kiota.version)"
+          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+      - name: Regenerate clients (just gen)
+        run: just gen
+      - name: Assert no drift (committed clients == fresh regeneration)
+        run: |
+          if [ -n "$(git status --porcelain -- sdks)" ]; then
+            echo "::error::regen-sync: committed SDK clients differ from a fresh \`just gen\` regeneration."
+            git status --porcelain -- sdks
+            git diff -- sdks
+            exit 1
+          fi
+          echo "regen-sync: committed clients match a fresh regeneration."
+
   # THE SINGLE REQUIRED CHECK. Runs always() so it can always report a status.
   # Green iff every needed job SUCCEEDED or was SKIPPED; red iff any needed job
   # genuinely failed or was cancelled. A path-filtered job that never ran counts
   # as a pass — that is the "succeeded-or-skipped" rule (#14 §5, user story 6).
   ci-gate:
     if: always()
-    needs: [changes, schema-assert]
+    needs: [changes, schema-assert, dotnet, typescript, regen-sync]
     runs-on: ubuntu-latest
     steps:
       - name: Assert no needed job failed

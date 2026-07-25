@@ -1,0 +1,11 @@
+{
+  "name": "gs1belu-mpm-typescript-sdks",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present"
+  }
+}

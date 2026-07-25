@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- NuGet id = root namespace = project name, per the SDK packaging contract. -->
+    <PackageId>Gs1Belu.MyProductManager.Download</PackageId>
+    <RootNamespace>Gs1Belu.MyProductManager.Download</RootNamespace>
+    <AssemblyName>Gs1Belu.MyProductManager.Download</AssemblyName>
+    <Description>Kiota-generated C# client for the GS1 Belgium &amp; Luxembourg My Product Manager Download API (v17).</Description>
+  </PropertyGroup>
+
+</Project>
