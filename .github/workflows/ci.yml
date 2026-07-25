@@ -20,7 +20,9 @@ name: CI
 #   1. Add a filter for its paths under the `changes` job's `filters:`.
 #   2. Define the job, gated with `if: needs.changes.outputs.<filter> == 'true'`.
 #   3. Add the job's name to `ci-gate.needs`.
-#   4. Add `${{ needs.<job>.result }}` to the `results` line in ci-gate's assert step.
+# That is the whole ritual — ci-gate iterates every job in `needs`, so a new job is
+# picked up automatically with no edit to the assert step (no list to forget to
+# update, so a failing job can never be silently dropped from the gate).
 # Branch protection never changes — it only ever references `ci-gate`.
 # ---------------------------------------------------------------------------
 
@@ -77,15 +79,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Assert no needed job failed
+        env:
+          # The full result map of every job in `needs`, as JSON. Passed via env
+          # (not inlined into the script) so the assert step is self-maintaining:
+          # it reads whatever jobs `needs` lists, with nothing to keep in sync.
+          NEEDS: ${{ toJSON(needs) }}
         run: |
-          # One entry per needed job. When you append a job (see the contract at
-          # the top of this file), add its `${{ needs.<job>.result }}` here too.
-          results="${{ needs.changes.result }} ${{ needs.schema-assert.result }}"
-          echo "needed job results: $results"
-          for r in $results; do
-            case "$r" in
-              success|skipped) ;;
-              *) echo "::error::ci-gate: a needed job reported '$r'"; exit 1 ;;
-            esac
-          done
+          echo "Needed job results:"
+          echo "$NEEDS" | jq -r 'to_entries[] | "  \(.key): \(.value.result)"'
+          failed=$(echo "$NEEDS" | jq -r '
+            to_entries[]
+            | select(.value.result != "success" and .value.result != "skipped")
+            | .key')
+          if [ -n "$failed" ]; then
+            echo "::error::ci-gate: needed job(s) did not pass: $(echo "$failed" | tr "\n" " ")"
+            exit 1
+          fi
           echo "ci-gate: all needed jobs succeeded or were skipped."
