@@ -6,8 +6,8 @@ specs, for SDK + MCP server design.
 Sources:
 - `docs/manuals/UploadAPI.pdf` (7 pages) — cited as **[Upload pN]**
 - `docs/manuals/DownloadAPI.pdf` (6 pages) — cited as **[Download pN]**
-- `docs/schemas/upload/v17.yaml` — cited as **[upload spec]**
-- `docs/schemas/download/v17.yaml` — cited as **[download spec]**
+- `schemas/upload/v17.yaml` — cited as **[upload spec]**
+- `schemas/download/v17.yaml` — cited as **[download spec]**
 
 ---
 

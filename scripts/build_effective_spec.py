@@ -50,6 +50,11 @@ def _yaml() -> YAML:
     return yaml
 
 
+def _rel(path: Path) -> str:
+    """Render a path relative to the repo root when possible, for readable output."""
+    return str(path.relative_to(REPO_ROOT) if path.is_relative_to(REPO_ROOT) else path)
+
+
 def _to_plain(value):
     """Normalise ruamel round-trip types to plain dict/list/scalars for comparison."""
     if isinstance(value, dict):
@@ -116,9 +121,11 @@ def apply_overlay(doc, overlay: dict | None) -> list[str]:
             if isinstance(update, dict) and isinstance(node, dict):
                 _deep_merge(node, update)
             elif update is not None:
-                # Scalar/whole-node replacement is not needed by our overlays, but
-                # support it for completeness.
-                match.full_path.update(doc, update)
+                raise ValueError(
+                    f"Overlay action {label!r}: only object (map) updates merged into "
+                    f"an object target are supported (got update of type "
+                    f"{type(update).__name__} for target {target})."
+                )
         applied.append(label)
     return applied
 
@@ -148,12 +155,8 @@ def build_api(
     applied = apply_overlay(doc, overlay)
 
     banner = _GENERATED_BANNER.format(
-        src=source.relative_to(REPO_ROOT) if source.is_relative_to(REPO_ROOT) else source.name,
-        overlay=(
-            overlay_path.relative_to(REPO_ROOT)
-            if overlay_path.is_file() and overlay_path.is_relative_to(REPO_ROOT)
-            else "(none)"
-        ),
+        src=_rel(source),
+        overlay=_rel(overlay_path) if overlay_path.is_file() else "(none)",
     )
     with output.open("w", encoding="utf-8") as fh:
         fh.write(banner)
@@ -204,7 +207,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     for r in results:
-        rel = r.output.relative_to(REPO_ROOT) if r.output.is_relative_to(REPO_ROOT) else r.output
+        rel = _rel(r.output)
         if r.applied:
             print(f"✓ {r.api}: wrote {rel} ({len(r.applied)} patch(es) applied)")
             for label in r.applied:
