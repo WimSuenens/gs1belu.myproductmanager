@@ -3,8 +3,8 @@
 Research date: 2026-07-23. All facts below are sourced from Microsoft's official Kiota documentation (learn.microsoft.com/en-us/openapi/kiota) and the `microsoft/kiota` / `microsoft/kiota-typescript` / `microsoft/kiota-dotnet` GitHub repositories (primary sources only). Each claim is cited.
 
 Grounding: this analysis is based on the two schemas in this repo:
-- `docs/schemas/upload/v17.yaml` — `POST /tradeitems` (`upsert-tradeitem`), `GET /tradeitems/{gtin}` (`get-tradeitem`)
-- `docs/schemas/download/v17.yaml` — `GET /tradeitems` (`get-tradeitems`), HAL-paginated, with `limit`, `cursor`, `since`, `gtin`, `informationProviderGLN`, etc. as query params
+- `schemas/upload/v17.yaml` — `POST /tradeitems` (`upsert-tradeitem`), `GET /tradeitems/{gtin}` (`get-tradeitem`)
+- `schemas/download/v17.yaml` — `GET /tradeitems` (`get-tradeitems`), HAL-paginated, with `limit`, `cursor`, `since`, `gtin`, `informationProviderGLN`, etc. as query params
 
 ---
 
@@ -236,8 +236,8 @@ Source: [Using the Kiota tool — Client generation](https://learn.microsoft.com
 
 Two example invocations for our repo:
 ```bash
-kiota generate -d docs/schemas/upload/v17.yaml   -l csharp     -c UploadClient   -n GS1Belu.MyProductManager.Upload   -o ./clients/csharp/upload
-kiota generate -d docs/schemas/download/v17.yaml -l typescript -c DownloadClient -n gs1belu.myproductmanager.download -o ./clients/ts/download
+kiota generate -d schemas/upload/v17.yaml   -l csharp     -c UploadClient   -n GS1Belu.MyProductManager.Upload   -o ./clients/csharp/upload
+kiota generate -d schemas/download/v17.yaml -l typescript -c DownloadClient -n gs1belu.myproductmanager.download -o ./clients/ts/download
 ```
 (Repeat for the remaining language × description combinations — 4 invocations total for the full C#+TS × Upload+Download matrix.)
 

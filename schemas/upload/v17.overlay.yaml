@@ -1,0 +1,12 @@
+overlay: 1.0.0
+info:
+  title: GS1 BeLu MPM Upload v17 — corrections
+  version: 1.0.0
+# The upload API has no defect in scope: it carries no `limit`/paging parameter,
+# and its two `type: number` fields are legitimately decimal. So there is
+# nothing to patch. This file exists (with an empty action list) to keep the
+# pipeline uniform across APIs and to document — auditably — that upload was
+# reviewed and deliberately left unpatched. The build treats an empty (or
+# absent) overlay as a no-op: the effective spec is semantically identical to
+# the pristine original.
+actions: []
