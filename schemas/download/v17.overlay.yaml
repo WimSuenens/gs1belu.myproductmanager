@@ -1,0 +1,22 @@
+overlay: 1.0.0
+info:
+  title: GS1 BeLu MPM Download v17 — corrections
+  version: 1.0.0
+# Corrections applied to the pristine vendor download spec to produce the
+# effective spec. The vendor file (v17.yaml) stays byte-exact; this overlay is
+# the entire, auditable delta. Each action is self-verifying: `x-assert-before`
+# records the pre-patch value the build checks the target still holds, so a
+# future vendor version that fixes the defect upstream fails the build (a "dead
+# patch") instead of silently carrying a no-op correction.
+actions:
+  # The `limit` page-size query parameter is typed `number` even though its own
+  # description reads "Format - int32." and a sibling parameter in the same
+  # document is already integer/int32. Align it to int32 so the generated SDK
+  # surface exposes page size as an integer, not a double/number.
+  - target: $.paths['/tradeitems'].get.parameters[?(@.name == 'limit')].schema
+    description: Align the download `limit` page-size parameter to type integer / format int32.
+    x-assert-before:
+      type: number
+    update:
+      type: integer
+      format: int32

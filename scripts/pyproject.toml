@@ -1,0 +1,14 @@
+[project]
+name = "gs1belu-schema-prep"
+version = "0.1.0"
+description = "Schema-prep build step: apply committed OpenAPI Overlays to the pristine GS1 BeLu MPM vendor specs to produce generator-ready effective specs."
+requires-python = ">=3.10"
+dependencies = [
+    "ruamel.yaml>=0.18",
+    "jsonpath-ng>=1.6",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+]
