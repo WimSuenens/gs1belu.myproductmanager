@@ -8,6 +8,23 @@ For the vocabulary used below (*pristine vendor original*, *overlay*, *effective
 *dead patch*), see [`CONTEXT.md`](../CONTEXT.md). For the rationale, see
 [ADR 0001](adr/0001-schema-source-of-truth-and-overlay-preparation.md).
 
+## Prerequisites
+
+- **[`just`](https://github.com/casey/just)** — the command runner that exposes the
+  `just gen` / `just test` front door (`brew install just`, or see the project's
+  install docs).
+- **[`uv`](https://docs.astral.sh/uv/)** — runs the schema-prep helper and manages its
+  Python environment (`brew install uv`). `uv` provisions the toolchain from
+  `scripts/pyproject.toml` + `scripts/uv.lock` on first run — no manual `pip install`.
+
+If `just` isn't available, run the underlying command directly — it's exactly what the
+recipe invokes:
+
+```sh
+uv run --project scripts python scripts/build_effective_spec.py   # == just gen
+uv run --project scripts pytest scripts/tests                     # == just test
+```
+
 ## Layout recap
 
 ```
