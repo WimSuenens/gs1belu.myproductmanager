@@ -16,7 +16,7 @@ actions:
   - target: $.paths['/tradeitems'].get.parameters[?(@.name == 'limit')].schema
     description: Align the download `limit` page-size parameter to type integer / format int32.
     x-assert-before:
-      type: number
+      type: string
     update:
       type: integer
       format: int32
