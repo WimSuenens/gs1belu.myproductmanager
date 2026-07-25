@@ -51,6 +51,27 @@ exit naming the action), forcing the maintainer to drop the now-dead action rath
 silently carry a no-op correction. In the full monorepo CI this surfaces as the
 `schema-assert` check (owned by the #14 scaffold spec).
 
+### Generated client
+
+A Kiota-generated SDK client committed under `sdks/<lang>/.../generated/` — one per
+[effective spec](#effective-spec) (Upload, Download) per language (C#, TypeScript),
+four in total. Produced by the pinned Kiota CLI (`sdks/kiota.version`) via `just gen`
+step 2, declared as data in `sdks/kiota-clients.json`. **Never hand-edited**:
+corrections flow through the schema's [overlay](#overlay) or a `kiota-clients.json`
+change, then a regenerate-and-commit. Quarantined in its own subtree (and, on the
+TypeScript side, its own relaxed `tsconfig.generated.json`) so the Experimental-tier
+Kiota TS output can't leak into a hand-written surface added on top later. See
+[`sdks/README.md`](sdks/README.md).
+
+### Regen-sync
+
+The SDK analog of the [dead-patch](#dead-patch) guard: a CI check that runs `just gen`
+fresh and fails if the working tree differs from the committed [generated clients](#generated-client)
+— proof that a [pristine vendor original](#pristine-vendor-original), overlay, or
+pinned-Kiota-version change never silently drifts a committed SDK. Gated on `sdks/**`
+OR `schemas/**`, since the [effective spec](#effective-spec) is git-ignored and a
+schema-only change can reshape a client with no `sdks/**` diff to trigger on.
+
 ## Structural rules
 
 - **Two documents, never merged.** `schemas/upload/` and `schemas/download/` are

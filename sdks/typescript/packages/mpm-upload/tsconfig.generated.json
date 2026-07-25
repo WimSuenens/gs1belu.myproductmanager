@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "rootDir": "generated",
+    "outDir": "dist/generated",
+    "tsBuildInfoFile": "dist/tsconfig.generated.tsbuildinfo",
+    "strict": false,
+    "noImplicitAny": false,
+    "useUnknownInCatchVariables": false
+  },
+  "include": ["generated/**/*.ts"]
+}

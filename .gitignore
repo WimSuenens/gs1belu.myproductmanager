@@ -9,3 +9,12 @@ __pycache__/
 .venv/
 scripts/.venv/
 .pytest_cache/
+
+# .NET build output (sdks/dotnet/) — obj/bin are rebuilt from committed sources.
+bin/
+obj/
+
+# TypeScript build output + npm workspace deps (sdks/typescript/) — node_modules
+# is reinstalled, dist/ is recompiled from committed generated/ + package sources.
+node_modules/
+dist/

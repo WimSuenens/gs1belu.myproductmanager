@@ -1,0 +1,30 @@
+<Project>
+  <!--
+    Shared build config for every project under sdks/dotnet/. Kept here — not
+    duplicated per .csproj — so the two SDKs (Upload, Download) can never drift
+    on target frameworks, nullable/lang settings, or the Kiota.Bundle pin.
+  -->
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- Kiota's generated code carries no XML doc comments on every member; don't
+         fail the build over CS1591 (missing XML comment) noise from generated/. -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Pinned >= 2.0.0 to avoid the high-severity NU1903 vulnerable transitive
+         dependency carried by older Kiota.Bundle releases. -->
+    <PackageReference Include="Microsoft.Kiota.Bundle" Version="[2.0.0,)" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <!-- netstandard2.0 alone still pulls a vulnerable transitive System.Text.Json
+         via Kiota.Bundle (GHSA-hh2w-p6rv-4g7w, GHSA-8g4q-xg66-9fp4); net8.0 uses the
+         framework-provided version and needs no override. Pin the patched release. -->
+    <PackageReference Include="System.Text.Json" Version="[8.0.5,)" />
+  </ItemGroup>
+</Project>

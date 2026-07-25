@@ -14,12 +14,13 @@ is defined once in [`CONTEXT.md`](CONTEXT.md); this document uses those terms ex
 |---|---|---|
 | [`just`](https://github.com/casey/just) | Task front door (`gen` / `build` / `test`) | 1.x |
 | [`uv`](https://docs.astral.sh/uv/) | Runs the Python schema-prep + MCP toolchains | Manages its own Python; no separate install needed |
-| [.NET SDK](https://dotnet.microsoft.com/download) | Builds/tests the C# SDK | 8.x+ _(needed once `sdks/dotnet/` lands)_ |
-| [Node.js](https://nodejs.org/) | Builds/tests the TypeScript SDK | LTS _(needed once `sdks/typescript/` lands)_ |
-| Pinned [Kiota](https://learn.microsoft.com/openapi/kiota/) CLI | Regenerates the SDK clients | Version is pinned by the SDK workspace (`kiota-lock.json`), so every contributor and CI generate byte-identical output. Lands with the SDK spec. |
+| [.NET SDK](https://dotnet.microsoft.com/download) | Builds the C# SDK; also hosts the Kiota CLI as a `dotnet tool` | 8.x+ |
+| [Node.js](https://nodejs.org/) | Type-checks/builds the TypeScript SDK | 20+ (ESM-only workspace) |
+| Pinned [Kiota](https://learn.microsoft.com/openapi/kiota/) CLI | Regenerates the four SDK clients | Version pinned in `sdks/kiota.version`; install with `dotnet tool install --global Microsoft.OpenApi.Kiota --version $(cat sdks/kiota.version)`. Every contributor and CI use the exact same version, so `just gen` output is byte-identical. |
 
-Only `just` + `uv` are required for the work that exists today (schema prep). The
-.NET / Node / Kiota tools become prerequisites as those roots are populated.
+All five tools are needed to run `just gen` + `just build` end to end. `just gen`
+alone (schema prep + client regeneration) needs `uv` + the pinned Kiota CLI; the
+C# / TS builds additionally need `dotnet` / `node`.
 
 ## `just` command reference
 
@@ -27,8 +28,8 @@ Only `just` + `uv` are required for the work that exists today (schema prep). Th
 
 | Command | What it does |
 |---|---|
-| `just gen` | Apply the committed overlays to the pristine vendor originals and (re)generate the git-ignored effective specs. Later grows the Kiota SDK regeneration step. |
-| `just build` | Build the artifacts (SDKs, MCP server). A documented placeholder today; each SDK/MCP spec appends its native build step. |
+| `just gen` | Step 1: apply the committed overlays to the pristine vendor originals and (re)generate the git-ignored effective specs. Step 2: run the pinned Kiota CLI to (re)generate the four SDK clients into their `generated/` subtrees. Later grows an MCP server generation step. |
+| `just build` | `dotnet build` over the C# solution (`sdks/dotnet/`), then `npm ci` + `tsc -b` over the TypeScript workspace (`sdks/typescript/`). Later grows an MCP server build step. |
 | `just test` | Run the schema-prep test suite (`scripts/tests`) — asserts the overlays still apply cleanly and the effective specs are correct. This is the exact seam CI's `schema-assert` job runs. |
 
 ## The schema-editing rule (never break this)
@@ -47,9 +48,11 @@ To correct a defect in a vendor schema:
    don't commit it).
 3. Run `just test` and commit the overlay change.
 
-Generated SDK client code follows the same rule: fix the schema via its overlay and
-regenerate — never patch the generated output by hand. (A future `regen-sync` CI job
-will re-run generation and fail on any drift.)
+Generated SDK client code (`sdks/*/**/generated/`) follows the same rule: fix the
+schema via its overlay, or a `sdks/kiota-clients.json` change, and regenerate — never
+patch the generated output by hand. The `regen-sync` CI job re-runs `just gen` and
+fails the build if the working tree differs from what's committed, so a stray
+hand-edit (or an un-regenerated schema change) is always caught.
 
 ## PR flow
 
@@ -59,8 +62,8 @@ included — direct pushes are blocked). The path:
 1. Branch off `main`.
 2. Open a PR. Fill in the PR template (declare which artifacts you touched).
 3. Wait for **`ci-gate`** to go green. `ci-gate` is the single required check; it
-   aggregates the path-filtered jobs (today just `schema-assert`) and passes when
-   each needed job **succeeded or was skipped**.
+   aggregates the path-filtered jobs (`schema-assert`, `dotnet`, `typescript`,
+   `regen-sync`) and passes when each needed job **succeeded or was skipped**.
 4. Make sure your branch is up to date with `main` (required before merge).
 5. Self-merge. Add a release entry per the release process if the change is
    user-facing (the release tooling is owned by a later spec; this document will
