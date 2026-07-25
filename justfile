@@ -34,3 +34,11 @@ build:
 # Run the schema-prep test suite.
 test:
     uv run --project scripts pytest scripts/tests -q
+
+# Run the SDK auth + ergonomic-surface test suites (C# + TypeScript). Kept separate from `test`
+# (schema-assert's CI job only installs uv/just, not dotnet/node) rather than folded into it.
+test-sdks:
+    dotnet test sdks/dotnet/Gs1Belu.MyProductManager.sln
+    npm --prefix sdks/typescript ci
+    npm --prefix sdks/typescript run build
+    npm --prefix sdks/typescript run test

@@ -76,8 +76,9 @@ jobs:
       - name: Assert overlays still apply (schema-prep suite)
         run: just test
 
-  # C# SDK build (#31/#33). Generates fresh clients (never assumes the git-ignored
-  # effective spec is present) then builds the multi-targeted solution.
+  # C# SDK build (#31/#33/#36). Generates fresh clients (never assumes the git-ignored
+  # effective spec is present), builds the multi-targeted solution, then runs the hand-written
+  # auth + ergonomic-surface test suite (behavioral, against a fake transport — see #36).
   dotnet:
     needs: changes
     if: needs.changes.outputs.sdks == 'true'
@@ -99,6 +100,8 @@ jobs:
         run: just gen
       - name: Build C# SDK
         run: dotnet build sdks/dotnet/Gs1Belu.MyProductManager.sln
+      - name: Run C# SDK tests (auth + ergonomic surface)
+        run: dotnet test sdks/dotnet/Gs1Belu.MyProductManager.sln
       - name: Assert no High/Critical vulnerable packages (NU1903 guard)
         run: |
           out="$(dotnet list sdks/dotnet/Gs1Belu.MyProductManager.sln package --vulnerable --include-transitive)"
@@ -108,9 +111,10 @@ jobs:
             exit 1
           fi
 
-  # TypeScript SDK build (#31/#34). Generates fresh clients then type-checks the
+  # TypeScript SDK build (#31/#34/#36). Generates fresh clients then type-checks the
   # ESM-only workspace (quarantined generated/ tsconfig contains the Experimental-
-  # Kiota @ts-ignore noise; this is a type-check, not a publish build).
+  # Kiota @ts-ignore noise; this is a type-check, not a publish build), then runs the
+  # hand-written auth + ergonomic-surface test suite against the compiled output (see #36).
   typescript:
     needs: changes
     if: needs.changes.outputs.sdks == 'true'
@@ -137,6 +141,8 @@ jobs:
         run: npm --prefix sdks/typescript ci
       - name: Type-check TypeScript SDK
         run: npm --prefix sdks/typescript run build
+      - name: Run TypeScript SDK tests (auth + ergonomic surface)
+        run: npm --prefix sdks/typescript run test
 
   # SDK analog of the schema-prep dead-patch guard (#7). Regenerates all four
   # clients fresh and fails if the working tree differs from what's committed —

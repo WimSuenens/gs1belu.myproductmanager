@@ -72,6 +72,33 @@ pinned-Kiota-version change never silently drifts a committed SDK. Gated on `sdk
 OR `schemas/**`, since the [effective spec](#effective-spec) is git-ignored and a
 schema-only change can reshape a client with no `sdks/**` diff to trigger on.
 
+### Ergonomic surface
+
+The strict, hand-written layer (#36) added on top of each [generated client](#generated-client) —
+never inside `generated/`, never touched by regeneration. It owns authentication (an
+[access-token provider](#access-token-provider) plus a subscription-key pipeline handler) and a
+small set of helpers (`uploadAndAwaitValidation`, `listAllTradeItems`, `assertValidGtin`/
+`assertValidGln`) that smooth over the raw API's async validation, HAL pagination, and unchecked
+identifier formats. Exposed through a locked-down public constructor (`environment` + `apiVersion`
++ a [credential set](#credential-set) — no `baseUrl` knob) so a consumer cannot misconfigure the
+base URL, token host, or OAuth `audience`. See [`sdks/README.md`](sdks/README.md).
+
+### Access-token provider
+
+The hand-written component of the [ergonomic surface](#ergonomic-surface) that fetches, caches, and
+proactively refreshes the OAuth2 client-credentials Bearer token: `IAccessTokenProvider` (C#) /
+`AccessTokenProvider` (TS), plugged into Kiota's `BaseBearerTokenAuthenticationProvider`. Refreshes
+on a skew margin before the token's runtime `expires_in` elapses (never a hardcoded lifetime) and
+coalesces concurrent callers onto a single in-flight fetch, so a client is never disconnected for
+re-authenticating too often — the failure mode the GS1 manuals warn against.
+
+### Credential set
+
+The three-field `{ clientId, clientSecret, subscriptionKey }` a consumer supplies per API client
+(Upload, Download) to the [ergonomic surface](#ergonomic-surface)'s public constructor. Upload and
+Download credentials are never assumed to be shared, since neither vendor manual states whether
+they're the same underlying APIM subscription.
+
 ## Structural rules
 
 - **Two documents, never merged.** `schemas/upload/` and `schemas/download/` are

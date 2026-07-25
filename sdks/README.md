@@ -34,6 +34,37 @@ This is what makes the `regen-sync` CI check trustworthy: it re-derives `generat
 from committed inputs and fails on any divergence, so a stray hand-edit is caught,
 not silently carried forward.
 
+## The hand-written ergonomic surface
+
+On top of each committed `generated/` client, a **strict hand-written surface** (#36) adds
+authentication and a thin set of ergonomic helpers — the layer the `generated/` quarantine was
+built to protect. It lives beside `generated/` (e.g. `dotnet/Gs1Belu.MyProductManager.Upload/*.cs`
+outside the `generated/` subtree, `typescript/packages/mpm-upload/src/`) and is never touched by
+regeneration.
+
+- **Public entry point** — `Gs1BeluUploadClient` / `Gs1BeluDownloadClient` per package. The public
+  constructor takes only `environment` (`uat`/`prod`) + an `apiVersion` (default `v17`) + a
+  **credential set** (`{ clientId, clientSecret, subscriptionKey }`, one per API — Upload and
+  Download credentials are never shared). The base URL, OAuth token host, and OAuth `audience` are
+  all *derived* from `environment`; there is no public `baseUrl` knob.
+- **Access-token provider** — a hand-written `IAccessTokenProvider` (C#) / `AccessTokenProvider`
+  (TS) plugged into Kiota's `BaseBearerTokenAuthenticationProvider`. It caches the Bearer token in
+  memory, refreshes it proactively on a skew margin before the runtime `expires_in` elapses, and
+  coalesces concurrent callers onto a single in-flight fetch. A pipeline handler/middleware stamps
+  the static `Ocp-Apim-Subscription-Key` header separately — Kiota's request adapter accepts only
+  one `IAuthenticationProvider`, so the two credentials live in different layers.
+- **Ergonomic helpers** — `uploadAndAwaitValidation` (Upload: submits, then polls `GET {gtin}`
+  until `metaData.status` leaves `pendingValidation`, bounded by a timeout), `listAllTradeItems`
+  (Download: an iterator that auto-follows HAL `_links.next`), and `assertValidGtin`/`assertValidGln`
+  (pure format checks restoring the `pattern` constraints Kiota drops from generated models).
+- **Testability** sits *below* the public constructor: tests build the Kiota request adapter
+  directly against a fake HTTP transport and a mocked token endpoint — a seam consumers never see.
+  See each package's `*.Tests` project (C#) / `src/__tests__` (TypeScript).
+
+Run `just test-sdks` to build and run both languages' test suites locally (separate from `just
+test`, which is the schema-prep suite `schema-assert` runs — that CI job has no dotnet/node
+toolchain installed).
+
 ## Generation and build
 
 Both run from the repo root; see [`CONTRIBUTING.md`](../CONTRIBUTING.md).
