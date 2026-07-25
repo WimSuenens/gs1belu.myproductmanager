@@ -99,6 +99,14 @@ jobs:
         run: just gen
       - name: Build C# SDK
         run: dotnet build sdks/dotnet/Gs1Belu.MyProductManager.sln
+      - name: Assert no High/Critical vulnerable packages (NU1903 guard)
+        run: |
+          out="$(dotnet list sdks/dotnet/Gs1Belu.MyProductManager.sln package --vulnerable --include-transitive)"
+          echo "$out"
+          if echo "$out" | grep -qE '(High|Critical)'; then
+            echo "::error::dotnet: High/Critical severity vulnerable package(s) detected."
+            exit 1
+          fi
 
   # TypeScript SDK build (#31/#34). Generates fresh clients then type-checks the
   # ESM-only workspace (quarantined generated/ tsconfig contains the Experimental-

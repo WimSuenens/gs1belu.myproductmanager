@@ -28,7 +28,7 @@ gen:
 # The MCP server (mcp/) lands its own build step with its spec.
 build:
     dotnet build sdks/dotnet/Gs1Belu.MyProductManager.sln
-    npm --prefix sdks/typescript install
+    npm --prefix sdks/typescript ci
     npm --prefix sdks/typescript run build
 
 # Run the schema-prep test suite.

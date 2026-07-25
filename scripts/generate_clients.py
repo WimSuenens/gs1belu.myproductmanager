@@ -75,9 +75,19 @@ def load_manifest(manifest_path: Path = DEFAULT_MANIFEST) -> list[ClientSpec]:
 
 def check_kiota_version(pinned: str) -> str:
     """Return the installed `kiota` version, raising if it doesn't match `pinned`."""
-    result = subprocess.run(
-        ["kiota", "--version"], capture_output=True, text=True, check=True
-    )
+    try:
+        result = subprocess.run(
+            ["kiota", "--version"], capture_output=True, text=True, check=True
+        )
+    except FileNotFoundError as exc:
+        raise KiotaVersionMismatch(
+            "kiota CLI not found on PATH. Install the pinned version "
+            f"({pinned}) so generation is reproducible."
+        ) from exc
+    except subprocess.CalledProcessError as exc:
+        raise KiotaVersionMismatch(
+            f"kiota --version exited {exc.returncode}: {exc.stderr}"
+        ) from exc
     match = re.search(r"\d+\.\d+\.\d+", result.stdout)
     installed = match.group(0) if match else result.stdout.strip()
     if installed != pinned:
