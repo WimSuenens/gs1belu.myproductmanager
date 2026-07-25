@@ -34,6 +34,10 @@ on:
 
 permissions:
   contents: read
+  # `dorny/paths-filter` reads a PR's changed-file list via the GitHub API on
+  # pull_request events; without this it fails with "Resource not accessible by
+  # integration". Read-only, and no effect on push events.
+  pull-requests: read
 
 jobs:
   # Detect which areas of the repo a change touched, so downstream jobs can skip
