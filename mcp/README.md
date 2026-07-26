@@ -159,4 +159,5 @@ Release-and-publish machinery — `server.json`, the `mcp-name` README marker ab
 bump — is configured per [#53](https://github.com/WimSuenens/gs1belu.myproductmanager/issues/53).
 That spec stops **below the first live publish**: registering the PyPI pending
 publisher, the GitHub App, and the MCP registry namespace are human-run,
-prerequisite-gated steps, not something this repo's CI performs on its own.
+prerequisite-gated steps, not something this repo's CI performs on its own — see
+[`docs/release-execution-checklist.md`](../docs/release-execution-checklist.md).

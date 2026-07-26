@@ -73,7 +73,9 @@ included — direct pushes are blocked). The path:
    standing release PR from your merged commit, independently per package (see
    `release-please-config.json`). Merging *that* PR is the deliberate "ship" action
    — it tags and publishes exactly the packages whose files changed via the three
-   `publish-*.yml` OIDC workflows.
+   `publish-*.yml` OIDC workflows. First time only: the GitHub App + registry
+   trusted-publisher setup this depends on is a one-time manual sequence — see
+   [`docs/release-execution-checklist.md`](docs/release-execution-checklist.md).
 
 ## Branch protection (recorded so it is reproducible)
 
