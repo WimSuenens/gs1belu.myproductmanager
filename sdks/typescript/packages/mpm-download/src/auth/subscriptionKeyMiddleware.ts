@@ -1,6 +1,4 @@
-// @ts-ignore
 import type { Middleware } from "@microsoft/kiota-http-fetchlibrary";
-// @ts-ignore
 import type { RequestOption } from "@microsoft/kiota-abstractions";
 
 const HEADER_NAME = "Ocp-Apim-Subscription-Key";

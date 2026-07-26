@@ -26,8 +26,12 @@ public sealed class Gs1BeluUploadClient
     /// <summary>The generated fluent client, authenticated and ready to use for anything beyond the ergonomic helpers.</summary>
     public UploadClient Client { get; }
 
-    public Gs1BeluUploadClient(Gs1BeluEnvironment environment, Gs1BeluCredentials credentials, string apiVersion = DefaultApiVersion)
-        : this(BuildRequestAdapter(environment, credentials, apiVersion))
+    /// <param name="logger">
+    /// Optional request/response logging sink. When omitted, no logging handler is added to the
+    /// pipeline — diagnosing an issue never requires patching the SDK, just supplying this.
+    /// </param>
+    public Gs1BeluUploadClient(Gs1BeluEnvironment environment, Gs1BeluCredentials credentials, string apiVersion = DefaultApiVersion, Action<string>? logger = null)
+        : this(BuildRequestAdapter(environment, credentials, apiVersion, logger))
     {
     }
 
@@ -42,7 +46,7 @@ public sealed class Gs1BeluUploadClient
         Client = new UploadClient(requestAdapter);
     }
 
-    private static IRequestAdapter BuildRequestAdapter(Gs1BeluEnvironment environment, Gs1BeluCredentials credentials, string apiVersion)
+    private static IRequestAdapter BuildRequestAdapter(Gs1BeluEnvironment environment, Gs1BeluCredentials credentials, string apiVersion, Action<string>? logger)
     {
         var allowedHosts = new AllowedHostsValidator(new[] { Gs1BeluEnvironmentResolver.ApiHost(environment) });
         var tokenProvider = new Gs1BeluAccessTokenProvider(
@@ -56,6 +60,10 @@ public sealed class Gs1BeluUploadClient
         handlers.Add(new SubscriptionKeyHandler(credentials.SubscriptionKey));
         handlers.Add(new BearerRetryHandler(tokenProvider));
         handlers.Add(new RateLimitHandler());
+        if (logger is not null)
+        {
+            handlers.Add(new LoggingHandler(logger));
+        }
 
         var chainHead = KiotaClientFactory.ChainHandlersCollectionAndGetFirstLink(
             KiotaClientFactory.GetDefaultHttpMessageHandler(),

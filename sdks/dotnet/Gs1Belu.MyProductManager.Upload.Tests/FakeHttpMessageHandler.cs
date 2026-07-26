@@ -29,6 +29,10 @@ internal sealed class FakeHttpMessageHandler : HttpMessageHandler
             throw new InvalidOperationException($"No fake response queued for {request.Method} {request.RequestUri}.");
         }
 
-        return Task.FromResult(_responses.Dequeue()(request));
+        var response = _responses.Dequeue()(request);
+        // A real HttpMessageHandler always sets this; Kiota's RetryHandler reads it to know what
+        // request to clone and resend, and silently gives up (no retry) if it's null.
+        response.RequestMessage ??= request;
+        return Task.FromResult(response);
     }
 }

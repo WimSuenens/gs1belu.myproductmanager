@@ -1,6 +1,4 @@
-// @ts-ignore
 import { BaseBearerTokenAuthenticationProvider, HttpMethod, RequestInformation, type RequestAdapter } from "@microsoft/kiota-abstractions";
-// @ts-ignore
 import { FetchRequestAdapter, KiotaClientFactory, MiddlewareFactory } from "@microsoft/kiota-http-fetchlibrary";
 
 import { createDownloadClient, type DownloadClient } from "../generated/downloadClient.js";
@@ -12,6 +10,7 @@ import { Gs1BeluAccessTokenProvider } from "./auth/accessTokenProvider.js";
 import { SubscriptionKeyMiddleware } from "./auth/subscriptionKeyMiddleware.js";
 import { BearerRetryMiddleware } from "./auth/bearerRetryMiddleware.js";
 import { RateLimitMiddleware } from "./auth/rateLimitMiddleware.js";
+import { LoggingMiddleware } from "./auth/loggingMiddleware.js";
 
 export const DEFAULT_API_VERSION = "v17";
 
@@ -19,6 +18,11 @@ export interface Gs1BeluDownloadClientDerivedOptions {
   environment: Gs1BeluEnvironment;
   credentials: Gs1BeluCredentials;
   apiVersion?: string;
+  /**
+   * Optional request/response logging sink. When omitted, no logging middleware is added to the
+   * pipeline — diagnosing an issue never requires patching the SDK, just supplying this.
+   */
+  logger?: (message: string) => void;
 }
 
 /**
@@ -93,12 +97,20 @@ function buildRequestAdapter(options: Gs1BeluDownloadClientDerivedOptions): Requ
   );
   const authProvider = new BaseBearerTokenAuthenticationProvider(tokenProvider);
 
+  // getDefaultMiddlewares()'s own last element is a CustomFetchHandler that calls fetch directly
+  // without forwarding to `.next` — Kiota's TS chain has no separate "final handler" slot the way
+  // the C# HttpClientRequestAdapter does. Anything appended after that element would never run, so
+  // it's dropped here; HttpClient's constructor appends its own single terminal CustomFetchHandler
+  // after our own middlewares instead.
   const middlewares = [
-    ...MiddlewareFactory.getDefaultMiddlewares(),
+    ...MiddlewareFactory.getDefaultMiddlewares().slice(0, -1),
     new SubscriptionKeyMiddleware(credentials.subscriptionKey),
     new BearerRetryMiddleware(tokenProvider),
     new RateLimitMiddleware(),
   ];
+  if (options.logger) {
+    middlewares.push(new LoggingMiddleware(options.logger));
+  }
   const httpClient = KiotaClientFactory.create(undefined, middlewares);
 
   const adapter = new FetchRequestAdapter(authProvider, undefined, undefined, httpClient);

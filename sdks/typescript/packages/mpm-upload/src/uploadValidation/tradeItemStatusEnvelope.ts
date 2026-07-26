@@ -1,4 +1,3 @@
-// @ts-ignore
 import type { Parsable, ParseNode } from "@microsoft/kiota-abstractions";
 
 /**
@@ -26,7 +25,6 @@ export interface TradeItemStatusEnvelope extends Parsable {
   metaData?: TradeItemMetaDataEnvelope | null;
 }
 
-// @ts-ignore
 export function createTradeItemValidationIssueEnvelopeFromDiscriminatorValue(_parseNode: ParseNode | undefined) {
   return deserializeIntoTradeItemValidationIssueEnvelope;
 }
@@ -47,7 +45,6 @@ export function deserializeIntoTradeItemValidationIssueEnvelope(
   };
 }
 
-// @ts-ignore
 export function createTradeItemMetaDataEnvelopeFromDiscriminatorValue(_parseNode: ParseNode | undefined) {
   return deserializeIntoTradeItemMetaDataEnvelope;
 }
@@ -67,7 +64,6 @@ export function deserializeIntoTradeItemMetaDataEnvelope(
   };
 }
 
-// @ts-ignore
 export function createTradeItemStatusEnvelopeFromDiscriminatorValue(_parseNode: ParseNode | undefined) {
   return deserializeIntoTradeItemStatusEnvelope;
 }

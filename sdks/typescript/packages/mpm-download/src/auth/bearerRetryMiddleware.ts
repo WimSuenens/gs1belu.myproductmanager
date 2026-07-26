@@ -1,6 +1,4 @@
-// @ts-ignore
 import type { Middleware } from "@microsoft/kiota-http-fetchlibrary";
-// @ts-ignore
 import type { RequestOption } from "@microsoft/kiota-abstractions";
 import type { Gs1BeluAccessTokenProvider } from "./accessTokenProvider.js";
 

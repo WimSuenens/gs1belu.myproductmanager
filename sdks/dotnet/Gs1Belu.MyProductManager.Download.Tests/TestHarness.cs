@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Net.Http;
 using Gs1Belu.MyProductManager.Download.Auth;
 using Microsoft.Kiota.Abstractions.Authentication;
@@ -38,13 +39,11 @@ internal sealed class TestHarness
             skewMargin: skewMargin);
 
         var authProvider = new BaseBearerTokenAuthenticationProvider(TokenProvider);
-        var handlers = new DelegatingHandler[]
-        {
-            new SubscriptionKeyHandler(credentials.SubscriptionKey),
-            new BearerRetryHandler(TokenProvider),
-            new RateLimitHandler(rateLimitPerWindow, rateLimitWindow),
-        };
-        var chainHead = KiotaClientFactory.ChainHandlersCollectionAndGetFirstLink(ApiTransport, handlers)
+        var handlers = KiotaClientFactory.CreateDefaultHandlers();
+        handlers.Add(new SubscriptionKeyHandler(credentials.SubscriptionKey));
+        handlers.Add(new BearerRetryHandler(TokenProvider));
+        handlers.Add(new RateLimitHandler(rateLimitPerWindow, rateLimitWindow));
+        var chainHead = KiotaClientFactory.ChainHandlersCollectionAndGetFirstLink(ApiTransport, handlers.ToArray())
             ?? throw new InvalidOperationException("Kiota did not return a handler chain.");
         var httpClient = new HttpClient(chainHead);
         var adapter = new HttpClientRequestAdapter(authProvider, httpClient: httpClient) { BaseUrl = FakeBaseUrl };

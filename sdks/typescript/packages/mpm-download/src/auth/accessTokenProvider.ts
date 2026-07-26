@@ -1,4 +1,3 @@
-// @ts-ignore
 import { AllowedHostsValidator, type AccessTokenProvider } from "@microsoft/kiota-abstractions";
 import type { Gs1BeluCredentials } from "../credentials.js";
 

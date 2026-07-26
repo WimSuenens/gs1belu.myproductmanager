@@ -1,7 +1,5 @@
-// @ts-ignore
 import { BaseBearerTokenAuthenticationProvider } from "@microsoft/kiota-abstractions";
-// @ts-ignore
-import { FetchRequestAdapter, KiotaClientFactory } from "@microsoft/kiota-http-fetchlibrary";
+import { FetchRequestAdapter, KiotaClientFactory, MiddlewareFactory } from "@microsoft/kiota-http-fetchlibrary";
 import { Gs1BeluAccessTokenProvider } from "../auth/accessTokenProvider.js";
 import { SubscriptionKeyMiddleware } from "../auth/subscriptionKeyMiddleware.js";
 import { BearerRetryMiddleware } from "../auth/bearerRetryMiddleware.js";
@@ -43,7 +41,11 @@ export function createTestHarness(options: TestHarnessOptions = {}) {
   );
   const authProvider = new BaseBearerTokenAuthenticationProvider(tokenProvider);
 
+  // Mirrors buildRequestAdapter's composition exactly (see its comment): drop the default chain's
+  // own embedded CustomFetchHandler so our middlewares actually run before HttpClient appends the
+  // one true terminal handler pointed at the fake transport.
   const middlewares = [
+    ...MiddlewareFactory.getDefaultMiddlewares().slice(0, -1),
     new SubscriptionKeyMiddleware(credentials.subscriptionKey),
     new BearerRetryMiddleware(tokenProvider),
     new RateLimitMiddleware(options.rateLimitPerWindow ?? 1000, options.rateLimitWindowMs),
