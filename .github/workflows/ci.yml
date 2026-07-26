@@ -150,7 +150,7 @@ jobs:
 
   # MCP server build (#46). Unlike the SDKs, FastMCP needs no code generation — it
   # reads the git-ignored effective spec directly via `from_openapi()` — so this job
-  # only needs `just gen` step 1 (the schema-prep build) and uv, not dotnet/Kiota.
+  # only needs `just gen-schemas` (step 1 alone) and uv, not dotnet/Kiota.
   # Runs the in-memory Client + fake-httpx-transport test suite (see #46).
   mcp:
     needs: changes
@@ -162,8 +162,8 @@ jobs:
         uses: astral-sh/setup-uv@v5
       - name: Install just
         uses: extractions/setup-just@v2
-      - name: Build effective specs (just gen step 1)
-        run: uv run --project scripts python scripts/build_effective_spec.py
+      - name: Build effective specs (just gen-schemas)
+        run: just gen-schemas
       - name: Run MCP server test suite
         run: just test-mcp
 

@@ -11,16 +11,20 @@
 default:
     @just --list
 
+# Step 1 alone: apply the committed overlays to the pristine vendor originals and
+# (re)generate the git-ignored effective specs. Broken out of `gen` so the MCP CI job
+# can build just the specs it needs without installing dotnet/Kiota for step 2.
+gen-schemas:
+    uv run --project scripts python scripts/build_effective_spec.py
+
 # Turn pristine vendor schemas into generator-ready clients.
-#   Step 1 — schema prep: apply the committed overlays to the pristine vendor
-#            originals and (re)generate the git-ignored effective specs.
+#   Step 1 — schema prep (see `gen-schemas`).
 #   Step 2 — Kiota generation: regenerate the four SDK clients (Upload +
 #            Download x C# + TypeScript) from those effective specs into their
 #            packages' quarantined generated/ subtrees. Never hand-edit
 #            generated/ output — fix the schema overlay or a Kiota config
 #            change, then regenerate.
-gen:
-    uv run --project scripts python scripts/build_effective_spec.py
+gen: gen-schemas
     uv run --project scripts python scripts/generate_clients.py
 
 # Build the SDKs from the generated clients.
