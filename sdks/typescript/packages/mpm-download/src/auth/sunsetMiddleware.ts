@@ -54,6 +54,6 @@ function formatSunsetMessage(notice: SunsetNotice): string {
     return `Sunset: this API version's announced sunset (${notice.parsedAt.toISOString()}) is already in the past — it may stop responding at any time.`;
   }
 
-  const days = Math.ceil((notice.parsedAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+  const days = Math.floor((notice.parsedAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
   return `Sunset: GS1 announced this API version will stop responding at ${notice.parsedAt.toISOString()} (in ${days} days). Plan a version migration.`;
 }
