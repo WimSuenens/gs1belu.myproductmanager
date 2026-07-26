@@ -98,7 +98,40 @@ produce a warning. The structured fields (`sunset_raw`, `sunset_parsed_at`,
 alerting via a `logging.Handler` instead of only scraping the message text. It never
 alters, retries, or fails a request — observation only.
 
-## Running locally
+## Quickstart
+
+No clone, no build — the published wheel bundles the effective specs it needs at
+runtime (see "Publishing" below). Point an MCP-capable client (Claude Desktop, an
+agent framework, etc.) at `uvx gs1belu-mpm-mcp` with the documented env vars, e.g. in
+`.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "gs1belu-mpm": {
+      "command": "uvx",
+      "args": ["gs1belu-mpm-mcp"],
+      "env": {
+        "GS1BELU_ENVIRONMENT": "uat",
+        "GS1BELU_UPLOAD_CLIENT_ID": "...",
+        "GS1BELU_UPLOAD_CLIENT_SECRET": "...",
+        "GS1BELU_UPLOAD_SUBSCRIPTION_KEY": "...",
+        "GS1BELU_DOWNLOAD_CLIENT_ID": "...",
+        "GS1BELU_DOWNLOAD_CLIENT_SECRET": "...",
+        "GS1BELU_DOWNLOAD_SUBSCRIPTION_KEY": "..."
+      }
+    }
+  }
+}
+```
+
+See "Auth" above for what each credential set means and where to get it.
+
+### Running locally (for development)
+
+Working in a checkout of this repo instead? `specs.py` prefers a packaged spec when
+present, but falls back to the git-ignored effective specs `just gen` produces, so an
+editable install keeps working against live schema-prep output:
 
 ```sh
 just gen                # builds the git-ignored effective specs (step 1 only needed)
@@ -108,8 +141,8 @@ export GS1BELU_DOWNLOAD_CLIENT_ID=... GS1BELU_DOWNLOAD_CLIENT_SECRET=... GS1BELU
 just run-mcp             # launches the composed server over stdio
 ```
 
-Or point an MCP-capable client (Claude Desktop, an agent framework, etc.) at
-`uv run --project mcp gs1belu-mpm-mcp` with the same environment variables set.
+Or point an MCP-capable client at `uv run --project mcp gs1belu-mpm-mcp` with the same
+environment variables set.
 
 ### Trying it interactively against live UAT
 
@@ -149,11 +182,19 @@ Python analog of the SDKs' fake-transport seam). See `mcp/tests/`:
 - `test_sunset.py` — a `Sunset` header on either sub-server's responses is logged
   with the parsed timestamp; absent stays silent; a past date is flagged; a
   malformed value surfaces its raw string without throwing.
+- `test_specs.py` — pins the packaged-resource spec-resolution path (#70) so a future
+  refactor that breaks bundling fails loudly here instead of silently falling back to
+  a dev-checkout path that happens to still work by accident.
 
 ## Layout
 
 - `pyproject.toml` — `gs1belu-mpm-mcp`, `fastmcp`/`httpx`/`PyYAML` deps, `pytest`/
-  `pytest-asyncio` dev group, `gs1belu-mpm-mcp` console entry point.
+  `pytest-asyncio` dev group, `gs1belu-mpm-mcp` console entry point, the custom build
+  hook + `artifacts` force-include that bundle the effective specs (#70).
+- `hatch_build.py` — build hook that copies `../schemas/<api>/v17.effective.yaml` into
+  the packaged `_specs/` resource home during sdist/wheel builds, so a published wheel
+  is self-contained (#70). Never hand-edit `src/gs1belu_mpm_mcp/_specs/` — it's a
+  git-ignored build output this hook (re)populates.
 - `src/gs1belu_mpm_mcp/`
   - `environment.py` / `config.py` — host/audience derivation and env-var credential
     loading (no raw base-URL knob).
@@ -166,7 +207,9 @@ Python analog of the SDKs' fake-transport seam). See `mcp/tests/`:
     testable async functions.
   - `server.py` — assembles the parent server (`build_server()`): RouteMap exclusion,
     `mcp_names` renaming, mounting.
-  - `specs.py` — locates and parses the git-ignored effective specs.
+  - `specs.py` — locates and parses the effective specs: packaged `_specs/` resource
+    first (bundled at build time), the git-ignored repo-relative `schemas/` path as a
+    dev-checkout fallback.
   - `cli.py` — the `gs1belu-mpm-mcp` console entry point.
 - `tests/` — the in-memory `Client` + fake-transport suite described above.
 
@@ -175,6 +218,10 @@ Python analog of the SDKs' fake-transport seam). See `mcp/tests/`:
 Release-and-publish machinery — `server.json`, the `mcp-name` README marker above,
 `publish-mcp.yml`'s PyPI + MCP-registry OIDC publish, and the release-please version
 bump — is configured per [#53](https://github.com/WimSuenens/gs1belu.myproductmanager/issues/53).
+The published sdist and wheel bundle the effective specs directly (#70), via
+`hatch_build.py` + `pyproject.toml`'s `artifacts` force-include, so `uvx
+gs1belu-mpm-mcp` needs no repo checkout at all.
+
 That spec stops **below the first live publish**: registering the PyPI pending
 publisher, the GitHub App, and the MCP registry namespace are human-run,
 prerequisite-gated steps, not something this repo's CI performs on its own — see
