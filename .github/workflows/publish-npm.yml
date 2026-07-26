@@ -1,7 +1,7 @@
 name: Publish npm packages
 
 # Triggers on exactly the tag prefixes release-please derives for the two npm
-# components (`mpm-upload`, `mpm-download` — see release-please-config.json).
+# components (`mpm-upload`, `mpm-fetch` — see release-please-config.json).
 # The tag prefix is the primary selector; publishing from the tagged commit
 # means `generated/` and `dist/`'s source are already the released state (no
 # regeneration needed here — regen-sync already proved `generated/` matches a
@@ -11,7 +11,7 @@ on:
   push:
     tags:
       - 'mpm-upload-v*'
-      - 'mpm-download-v*'
+      - 'mpm-fetch-v*'
 
 permissions:
   contents: read
@@ -36,9 +36,12 @@ jobs:
         env:
           REF_NAME: ${{ github.ref_name }}
         run: |
+          # The @gs1belu/mpm-fetch package still lives in the packages/mpm-download
+          # directory — only the published npm name + tag prefix were renamed off
+          # "download" (npm abuse-filter rejection, #60); the directory stayed put.
           case "$REF_NAME" in
             mpm-upload-v*) echo "dir=packages/mpm-upload" >> "$GITHUB_OUTPUT" ;;
-            mpm-download-v*) echo "dir=packages/mpm-download" >> "$GITHUB_OUTPUT" ;;
+            mpm-fetch-v*) echo "dir=packages/mpm-download" >> "$GITHUB_OUTPUT" ;;
             *) echo "::error::publish-npm: unrecognized tag '$REF_NAME' — no matching package."; exit 1 ;;
           esac
 
@@ -65,4 +68,4 @@ jobs:
       #     working-directory: sdks/typescript/${{ steps.pkg.outputs.dir }}
       #
       # NPM_GRANULAR_TOKEN must be a token scoped to exactly
-      # @gs1belu/mpm-upload + @gs1belu/mpm-download — never an account-wide token.
+      # @gs1belu/mpm-upload + @gs1belu/mpm-fetch — never an account-wide token.

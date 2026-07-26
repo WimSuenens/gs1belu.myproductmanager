@@ -18,7 +18,7 @@ under [`schemas/`](../schemas/) — one client per document, never merged.
   project name), each wrapping its own committed `generated/` client. No shared `-core`
   project — each owns its own Kiota-duplicated models.
 - `typescript/` — the TypeScript SDK: an ESM-only npm workspace (`"type": "module"`,
-  `NodeNext`) declaring two packages, `@gs1belu/mpm-upload` / `@gs1belu/mpm-download`,
+  `NodeNext`) declaring two packages, `@gs1belu/mpm-upload` / `@gs1belu/mpm-fetch`,
   each with a committed `generated/` client and its own `tsconfig.generated.json` —
   a quarantined, relaxed compiler config (kept *outside* `generated/` itself, since
   Kiota's `--clean-output` wipes that directory on every regeneration) that contains

@@ -1,4 +1,4 @@
-# @gs1belu/mpm-download
+# @gs1belu/mpm-fetch
 
 Kiota-generated TypeScript client for the GS1 Belgium & Luxembourg **My Product
 Manager** Download API (v17), with a hand-written authenticated ergonomic surface
@@ -12,13 +12,13 @@ on top.
 ## Install
 
 ```sh
-npm install @gs1belu/mpm-download
+npm install @gs1belu/mpm-fetch
 ```
 
 ## Usage
 
 ```ts
-import { Gs1BeluDownloadClient } from "@gs1belu/mpm-download";
+import { Gs1BeluDownloadClient } from "@gs1belu/mpm-fetch";
 
 const client = new Gs1BeluDownloadClient({
   environment: "uat",

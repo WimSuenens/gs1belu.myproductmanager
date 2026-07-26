@@ -30,8 +30,8 @@
     },
     "sdks/typescript/packages/mpm-download": {
       "release-type": "node",
-      "component": "mpm-download",
-      "package-name": "@gs1belu/mpm-download"
+      "component": "mpm-fetch",
+      "package-name": "@gs1belu/mpm-fetch"
     },
     "mcp": {
       "release-type": "python",

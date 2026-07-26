@@ -39,7 +39,7 @@ it maintains a standing release PR with the pending per-package version bumps.
 **Merging that release PR** (a separate, later, deliberate action — not this one)
 is what pushes the tags and fires the publish workflows below.
 
-## 3. npm (`publish-npm.yml` — `mpm-upload-v*` / `mpm-download-v*`)
+## 3. npm (`publish-npm.yml` — `mpm-upload-v*` / `mpm-fetch-v*`)
 
 - [ ] Create the `@gs1belu` org on npmjs.com (if it doesn't already exist).
 - [ ] **Publish each package once manually first**, with a classic/granular
