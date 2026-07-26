@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/WimSuenens/gs1belu.myproductmanager/compare/mcp-v0.3.0...mcp-v0.3.1) (2026-07-26)
+
+
+### Bug Fixes
+
+* **mcp:** bundle effective specs into the wheel for self-contained uvx installs ([#71](https://github.com/WimSuenens/gs1belu.myproductmanager/issues/71)) ([43cf320](https://github.com/WimSuenens/gs1belu.myproductmanager/commit/43cf320b9c48764e83588071cfc5181873dbc99c))
+
 ## [0.3.0](https://github.com/WimSuenens/gs1belu.myproductmanager/compare/mcp-v0.2.2...mcp-v0.3.0) (2026-07-26)
 
 
