@@ -260,10 +260,14 @@ jobs:
         # checkout — so this must target the PR's own branch (not `main`), or a PR that
         # introduces/changes the config can never dry-run against a `main` that doesn't
         # have it yet (the exact bootstrapping trap this comment exists to avoid re-hitting).
+        # The branch name flows through an env var, never inlined into the script, per
+        # actionlint's script-injection guidance for untrusted `github.head_ref` values.
+        env:
+          TARGET_BRANCH: ${{ github.head_ref || github.ref_name }}
         run: |
           npx --yes release-please@16 release-pr \
             --repo-url="https://github.com/WimSuenens/gs1belu.myproductmanager" \
-            --target-branch="${{ github.head_ref || github.ref_name }}" \
+            --target-branch="$TARGET_BRANCH" \
             --token="${{ secrets.GITHUB_TOKEN }}" \
             --dry-run
       - name: actionlint (new release/publish workflows)
