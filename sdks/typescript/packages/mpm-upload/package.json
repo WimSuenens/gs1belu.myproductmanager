@@ -4,21 +4,23 @@
   "private": true,
   "description": "Kiota-generated TypeScript client for the GS1 Belgium & Luxembourg My Product Manager Upload API (v17).",
   "type": "module",
-  "types": "./dist/index.d.ts",
-  "main": "./dist/index.js",
+  "types": "./dist/src/index.d.ts",
+  "main": "./dist/src/index.js",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
     }
   },
   "scripts": {
-    "build": "tsc -b"
+    "build": "tsc -b",
+    "test": "node --test dist/src/__tests__/*.test.js"
   },
   "dependencies": {
     "@microsoft/kiota-bundle": "1.0.0-preview.100"
   },
   "devDependencies": {
-    "typescript": "^5.9.0"
+    "typescript": "^5.9.0",
+    "@types/node": "^22.0.0"
   }
 }

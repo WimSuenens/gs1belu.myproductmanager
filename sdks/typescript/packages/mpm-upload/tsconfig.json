@@ -2,7 +2,11 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "composite": true,
-    "rootDir": "src",
+    // rootDir is the package root (not "src") so compiled output preserves the "src/generated"
+    // sibling depth: src/index.ts -> dist/src/index.js, matching generated/x.ts -> dist/generated/x.js
+    // one level up. Without this, "../generated/x.js" relative imports resolve correctly only
+    // during type-checking (via project references) and break at runtime.
+    "rootDir": ".",
     "outDir": "dist",
     "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo",
     "strict": true
