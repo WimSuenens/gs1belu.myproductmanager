@@ -18,3 +18,8 @@ obj/
 # is reinstalled, dist/ is recompiled from committed generated/ + package sources.
 node_modules/
 dist/
+
+# Local credentials for running the MCP server against live GS1 UAT/prod — never
+# committed. mcp/.env.example documents the required variable names.
+.env
+mcp/.env

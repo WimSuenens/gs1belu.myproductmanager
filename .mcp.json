@@ -3,6 +3,11 @@
     "context7": {
       "type": "http",
       "url": "https://mcp.context7.com/mcp"
+    },
+    "gs1belu-mpm": {
+      "type": "stdio",
+      "command": "uv",
+      "args": ["run", "--project", "mcp", "--env-file", "mcp/.env", "gs1belu-mpm-mcp"]
     }
   }
 }

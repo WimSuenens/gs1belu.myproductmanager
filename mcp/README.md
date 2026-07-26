@@ -90,6 +90,23 @@ just run-mcp             # launches the composed server over stdio
 Or point an MCP-capable client (Claude Desktop, an agent framework, etc.) at
 `uv run --project mcp gs1belu-mpm-mcp` with the same environment variables set.
 
+### Trying it interactively against live UAT
+
+`just test-mcp` (below) never touches the network — it's a fake-transport suite. To
+call the three tools for real against GS1's UAT environment, use the
+[MCP Inspector](https://github.com/modelcontextprotocol/inspector):
+
+```sh
+just gen                                              # if not already built
+cp mcp/.env.example mcp/.env                          # fill in real UAT credentials
+npx @modelcontextprotocol/inspector uv run --project mcp --env-file mcp/.env gs1belu-mpm-mcp
+```
+
+This opens a browser UI listing `upsert_and_await_validation`, `get_trade_item_by_gtin`,
+and `search_trade_items`, with a form to call each one and inspect the raw response —
+useful for confirming real-world behavior the mocked suite only asserts against canned
+fixtures (e.g. that polling actually settles out of `pendingValidation`).
+
 ## Testing
 
 `just test-mcp` drives the assembled parent server through FastMCP's **in-memory
