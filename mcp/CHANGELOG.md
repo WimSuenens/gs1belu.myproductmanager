@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/WimSuenens/gs1belu.myproductmanager/compare/mcp-v0.2.1...mcp-v0.2.2) (2026-07-26)
+
+
+### Bug Fixes
+
+* **mcp:** match server.json namespace casing to actual GitHub login ([#65](https://github.com/WimSuenens/gs1belu.myproductmanager/issues/65)) ([1083439](https://github.com/WimSuenens/gs1belu.myproductmanager/commit/1083439a83dc19143dcad46696351317fc79be9f))
+
 ## [0.2.1](https://github.com/WimSuenens/gs1belu.myproductmanager/compare/mcp-v0.2.0...mcp-v0.2.1) (2026-07-26)
 
 
