@@ -1,9 +1,10 @@
 """Builds the one authenticated `httpx.AsyncClient` each sub-server (and its
 hand-written tools) shares — base URL derived from `environment`, `Gs1BeluAuth` for
-both credential layers, `RateLimiter` for the 10 req/s cap, and the structured-error
-response hook. `transport` is the one testability seam: omit it for real network use,
-inject an `httpx.MockTransport` in tests so both the upstream API host and the token
-host route through the same fake — it is never exposed on the server's public config.
+both credential layers, `RateLimiter` for the 10 req/s cap, and the Sunset-observing
+and structured-error response hooks. `transport` is the one testability seam: omit it
+for real network use, inject an `httpx.MockTransport` in tests so both the upstream API
+host and the token host route through the same fake — it is never exposed on the
+server's public config.
 """
 
 from __future__ import annotations
@@ -15,6 +16,7 @@ from .config import CredentialSet
 from .environment import Environment, audience, base_url, token_endpoint
 from .errors import raise_structured_error
 from .ratelimit import RateLimiter
+from .sunset import warn_on_sunset
 
 
 def build_upstream_client(
@@ -39,6 +41,8 @@ def build_upstream_client(
         transport=transport,
         event_hooks={
             "request": [rate_limiter.on_request],
-            "response": [raise_structured_error],
+            # warn_on_sunset first: it never raises, so a Sunset header is still surfaced
+            # even when the response is also a non-2xx that raise_structured_error rejects.
+            "response": [warn_on_sunset, raise_structured_error],
         },
     )

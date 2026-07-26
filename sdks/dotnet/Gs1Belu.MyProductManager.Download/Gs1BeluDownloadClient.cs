@@ -32,8 +32,14 @@ public sealed class Gs1BeluDownloadClient
     /// Optional request/response logging sink. When omitted, no logging handler is added to the
     /// pipeline — diagnosing an issue never requires patching the SDK, just supplying this.
     /// </param>
-    public Gs1BeluDownloadClient(Gs1BeluEnvironment environment, Gs1BeluCredentials credentials, string apiVersion = DefaultApiVersion, Action<string>? logger = null)
-        : this(BuildRequestAdapter(environment, credentials, apiVersion, logger))
+    /// <param name="onSunset">
+    /// Optional structured sink for the <c>Sunset</c> response header (RFC 8594), which GS1 uses to
+    /// announce an API-version retirement. When omitted but <paramref name="logger"/> is supplied, a
+    /// sunset is still surfaced as a formatted warning through <paramref name="logger"/>; when both
+    /// are omitted, no sunset handler is added to the pipeline.
+    /// </param>
+    public Gs1BeluDownloadClient(Gs1BeluEnvironment environment, Gs1BeluCredentials credentials, string apiVersion = DefaultApiVersion, Action<string>? logger = null, Action<SunsetNotice>? onSunset = null)
+        : this(BuildRequestAdapter(environment, credentials, apiVersion, logger, onSunset))
     {
     }
 
@@ -48,7 +54,7 @@ public sealed class Gs1BeluDownloadClient
         Client = new DownloadClient(requestAdapter);
     }
 
-    private static IRequestAdapter BuildRequestAdapter(Gs1BeluEnvironment environment, Gs1BeluCredentials credentials, string apiVersion, Action<string>? logger)
+    private static IRequestAdapter BuildRequestAdapter(Gs1BeluEnvironment environment, Gs1BeluCredentials credentials, string apiVersion, Action<string>? logger, Action<SunsetNotice>? onSunset)
     {
         var allowedHosts = new AllowedHostsValidator(new[] { Gs1BeluEnvironmentResolver.ApiHost(environment) });
         var tokenProvider = new Gs1BeluAccessTokenProvider(
@@ -65,6 +71,10 @@ public sealed class Gs1BeluDownloadClient
         if (logger is not null)
         {
             handlers.Add(new LoggingHandler(logger));
+        }
+        if (logger is not null || onSunset is not null)
+        {
+            handlers.Add(new SunsetHandler(logger, onSunset));
         }
 
         var chainHead = KiotaClientFactory.ChainHandlersCollectionAndGetFirstLink(

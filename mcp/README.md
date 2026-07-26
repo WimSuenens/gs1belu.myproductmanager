@@ -84,6 +84,20 @@ auth and structured-error hooks, so every request — generated tools and the
 hand-written composite/search tools alike — stays under the confirmed rate cap
 (`docs/research/gs1-api-facts.md` §3).
 
+## Sunset monitoring
+
+GS1 can announce an API-version retirement in-band via the `Sunset` header (RFC
+8594) — the Download manual documents monitoring it as best practice, including
+preparing for a date already in the past. `warn_on_sunset` (`sunset.py`) is a
+response hook, attached alongside `raise_structured_error` on each sub-server's
+client, that logs a `WARNING` through `logging.getLogger("gs1belu_mpm_mcp.sunset")`
+whenever a response carries the header — a future date, a malformed value (raw
+string surfaced, never dropped), and an already-past date (flagged distinctly) all
+produce a warning. The structured fields (`sunset_raw`, `sunset_parsed_at`,
+`sunset_is_past`) land in the `LogRecord`'s `extra`, so an operator can wire real
+alerting via a `logging.Handler` instead of only scraping the message text. It never
+alters, retries, or fails a request — observation only.
+
 ## Running locally
 
 ```sh
@@ -132,6 +146,9 @@ Python analog of the SDKs' fake-transport seam). See `mcp/tests/`:
   with the cursor advances.
 - `test_errors.py` — canned 400/401/403/404 responses assert the exact structured
   `ToolError` shapes.
+- `test_sunset.py` — a `Sunset` header on either sub-server's responses is logged
+  with the parsed timestamp; absent stays silent; a past date is flagged; a
+  malformed value surfaces its raw string without throwing.
 
 ## Layout
 
@@ -140,9 +157,10 @@ Python analog of the SDKs' fake-transport seam). See `mcp/tests/`:
 - `src/gs1belu_mpm_mcp/`
   - `environment.py` / `config.py` — host/audience derivation and env-var credential
     loading (no raw base-URL knob).
-  - `auth.py` / `ratelimit.py` / `errors.py` — the two-layer `httpx.Auth`, the sliding-
-    window rate limiter, and the structured non-2xx -> `ToolError` mapping.
-  - `clients.py` — wires the three into one authenticated `httpx.AsyncClient` per
+  - `auth.py` / `ratelimit.py` / `errors.py` / `sunset.py` — the two-layer
+    `httpx.Auth`, the sliding-window rate limiter, the structured non-2xx ->
+    `ToolError` mapping, and the `Sunset`-header observer.
+  - `clients.py` — wires the four into one authenticated `httpx.AsyncClient` per
     sub-server; `transport` is the one testability seam, never exposed publicly.
   - `composite.py` / `search.py` — the two hand-written tools as plain, independently
     testable async functions.

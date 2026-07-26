@@ -31,6 +31,19 @@ await foreach (var tradeItem in client.ListAllTradeItemsAsync(q => q.Information
 `ListAllTradeItemsAsync` auto-follows the HAL `_links.next` pages GS1 returns, so
 you never re-derive pagination yourself.
 
+## Sunset monitoring
+
+GS1 can announce an API-version retirement in-band via the `Sunset` header (RFC
+8594). Pass `onSunset` (and/or `logger`) to get warned the moment a response
+carries one — including when the announced date is already in the past:
+
+```csharp
+var client = new Gs1BeluDownloadClient(Gs1BeluEnvironment.Uat, credentials,
+    onSunset: notice => Console.WriteLine($"Sunset at {notice.ParsedAt}, isPast={notice.IsPast}"));
+```
+
+This never alters, retries, or fails a request — it only observes and reports.
+
 ## Links
 
 - [Source & full docs](https://github.com/WimSuenens/gs1belu.myproductmanager/tree/main/sdks/dotnet/Gs1Belu.MyProductManager.Download)

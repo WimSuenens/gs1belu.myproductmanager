@@ -103,6 +103,21 @@ surface](#ergonomic-surface)'s public constructor in the SDKs, or per sub-server
 server](mcp/README.md). Upload and Download credentials are never assumed to be shared, since
 neither vendor manual states whether they're the same underlying APIM subscription.
 
+### Sunset monitoring
+
+Observes the `Sunset` response header (RFC 8594), which GS1 can use to announce that
+an API version will stop responding — the Download manual documents this as best
+practice to monitor, including preparing for a date already in the past (`docs/
+research/gs1-api-facts.md` §"Sunset header"). A sibling of each package's
+request/response logging observer, added to the same pipeline seam: `SunsetHandler`
+(C#), `SunsetMiddleware` (TS), `warn_on_sunset` (Python, an httpx response hook in
+`mcp/`). Purely observational — it never alters, retries, or fails a request. An
+absent header costs nothing beyond the lookup; a present one is parsed as an
+HTTP-date and surfaced as a structured `SunsetNotice` (raw value, parsed instant,
+already-past flag) through the package's existing callback/logger seam, with an
+unparseable value surfaced as its raw string rather than dropped. See issue
+[#67](https://github.com/WimSuenens/gs1belu.myproductmanager/issues/67).
+
 ## Structural rules
 
 - **Two documents, never merged.** `schemas/upload/` and `schemas/download/` are

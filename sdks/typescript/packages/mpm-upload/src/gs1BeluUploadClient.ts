@@ -11,6 +11,7 @@ import { SubscriptionKeyMiddleware } from "./auth/subscriptionKeyMiddleware.js";
 import { BearerRetryMiddleware } from "./auth/bearerRetryMiddleware.js";
 import { RateLimitMiddleware } from "./auth/rateLimitMiddleware.js";
 import { LoggingMiddleware } from "./auth/loggingMiddleware.js";
+import { SunsetMiddleware, type SunsetNotice } from "./auth/sunsetMiddleware.js";
 import { assertValidGtin } from "./identifierValidation.js";
 import { createTradeItemStatusEnvelopeFromDiscriminatorValue, type TradeItemStatusEnvelope } from "./uploadValidation/tradeItemStatusEnvelope.js";
 import type { UploadValidationIssue, UploadValidationResult, UploadValidationStatus } from "./uploadValidation/uploadValidationResult.js";
@@ -26,6 +27,13 @@ export interface Gs1BeluUploadClientDerivedOptions {
    * pipeline — diagnosing an issue never requires patching the SDK, just supplying this.
    */
   logger?: (message: string) => void;
+  /**
+   * Optional structured sink for the `Sunset` response header (RFC 8594), which GS1 uses to
+   * announce an API-version retirement. When omitted but `logger` is supplied, a sunset is still
+   * surfaced as a formatted warning through `logger`; when both are omitted, no sunset middleware
+   * is added to the pipeline.
+   */
+  onSunset?: (notice: SunsetNotice) => void;
 }
 
 /**
@@ -127,6 +135,9 @@ function buildRequestAdapter(options: Gs1BeluUploadClientDerivedOptions): Reques
   ];
   if (options.logger) {
     middlewares.push(new LoggingMiddleware(options.logger));
+  }
+  if (options.logger || options.onSunset) {
+    middlewares.push(new SunsetMiddleware(options.logger, options.onSunset));
   }
   const httpClient = KiotaClientFactory.create(undefined, middlewares);
 
