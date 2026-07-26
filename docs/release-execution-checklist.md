@@ -99,7 +99,7 @@ is what pushes the tags and fires the publish workflows below.
       publish (v0.1.0).
 - [ ] No separate registration needed for the MCP Registry step: `mcp-publisher
       login github-oidc` authenticates as this repository via GitHub OIDC, which
-      is sufficient to claim the `io.github.wimsuenens/gs1belu-mpm` namespace on
+      is sufficient to claim the `io.github.WimSuenens/gs1belu-mpm` namespace on
       first publish.
 - [ ] Periodically re-check the pinned `mcp-publisher` version in
       `publish-mcp.yml` (`MCP_PUBLISHER_VERSION`) against

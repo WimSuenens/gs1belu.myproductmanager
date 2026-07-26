@@ -178,7 +178,7 @@ def test_csharp_package_ships_its_own_readme(package_path, csproj_filename):
 
 def test_mcp_server_json_shape():
     server_json = rc.mcp_server_json()
-    assert server_json.get("name") == "io.github.wimsuenens/gs1belu-mpm"
+    assert server_json.get("name") == "io.github.WimSuenens/gs1belu-mpm"
     assert server_json.get("description")
     assert server_json.get("version")
 

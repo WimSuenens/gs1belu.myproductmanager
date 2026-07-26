@@ -55,7 +55,7 @@ PACKAGE_READMES = (
 )
 
 DISCLAIMER_SNIPPET = "not affiliated with, endorsed by, or supported by GS1"
-MCP_NAME_MARKER = "mcp-name: io.github.wimsuenens/gs1belu-mpm"
+MCP_NAME_MARKER = "mcp-name: io.github.WimSuenens/gs1belu-mpm"
 
 _yaml = YAML(typ="safe")
 
