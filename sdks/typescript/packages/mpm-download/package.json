@@ -1,6 +1,6 @@
 {
   "name": "@gs1belu/mpm-fetch",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Kiota-generated TypeScript client for the GS1 Belgium & Luxembourg My Product Manager Download API (v17).",
   "license": "MIT",
   "type": "module",

@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/WimSuenens/gs1belu.myproductmanager/compare/mpm-fetch-v1.1.0...mpm-fetch-v1.2.0) (2026-07-26)
+
+
+### Features
+
+* surface Sunset header (RFC 8594) across SDKs + MCP ([#68](https://github.com/WimSuenens/gs1belu.myproductmanager/issues/68)) ([3692a6a](https://github.com/WimSuenens/gs1belu.myproductmanager/commit/3692a6a358e2afaaae36f99c061be1e6f58de397))
+
 ## [1.1.0](https://github.com/WimSuenens/gs1belu.myproductmanager/compare/mpm-fetch-v1.0.0...mpm-fetch-v1.1.0) (2026-07-26)
 
 
