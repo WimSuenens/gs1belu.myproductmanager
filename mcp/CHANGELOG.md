@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/WimSuenens/gs1belu.myproductmanager/compare/mcp-v0.2.2...mcp-v0.3.0) (2026-07-26)
+
+
+### Features
+
+* surface Sunset header (RFC 8594) across SDKs + MCP ([#68](https://github.com/WimSuenens/gs1belu.myproductmanager/issues/68)) ([3692a6a](https://github.com/WimSuenens/gs1belu.myproductmanager/commit/3692a6a358e2afaaae36f99c061be1e6f58de397))
+
 ## [0.2.2](https://github.com/WimSuenens/gs1belu.myproductmanager/compare/mcp-v0.2.1...mcp-v0.2.2) (2026-07-26)
 
 
