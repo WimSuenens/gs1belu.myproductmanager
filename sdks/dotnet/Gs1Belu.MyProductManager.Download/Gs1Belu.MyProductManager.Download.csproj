@@ -6,6 +6,11 @@
     <RootNamespace>Gs1Belu.MyProductManager.Download</RootNamespace>
     <AssemblyName>Gs1Belu.MyProductManager.Download</AssemblyName>
     <Description>Kiota-generated C# client for the GS1 Belgium &amp; Luxembourg My Product Manager Download API (v17).</Description>
+    <Version>1.0.0</Version> <!-- x-release-please-version -->
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
 </Project>

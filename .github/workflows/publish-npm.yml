@@ -1,0 +1,68 @@
+name: Publish npm packages
+
+# Triggers on exactly the tag prefixes release-please derives for the two npm
+# components (`mpm-upload`, `mpm-download` — see release-please-config.json).
+# The tag prefix is the primary selector; publishing from the tagged commit
+# means `generated/` and `dist/`'s source are already the released state (no
+# regeneration needed here — regen-sync already proved `generated/` matches a
+# fresh `just gen` before this ever merged to main).
+
+on:
+  push:
+    tags:
+      - 'mpm-upload-v*'
+      - 'mpm-download-v*'
+
+permissions:
+  contents: read
+  id-token: write # npm OIDC Trusted Publishing — no NODE_AUTH_TOKEN stored anywhere.
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.14.0' # floor for npm OIDC Trusted Publishing (npm >= 11.5.1).
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Ensure npm >= 11.5.1 (OIDC Trusted Publishing floor)
+        run: npm install -g npm@latest
+
+      - name: Resolve package directory from tag
+        id: pkg
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          case "$REF_NAME" in
+            mpm-upload-v*) echo "dir=packages/mpm-upload" >> "$GITHUB_OUTPUT" ;;
+            mpm-download-v*) echo "dir=packages/mpm-download" >> "$GITHUB_OUTPUT" ;;
+            *) echo "::error::publish-npm: unrecognized tag '$REF_NAME' — no matching package."; exit 1 ;;
+          esac
+
+      - name: Install workspace deps
+        run: npm ci
+        working-directory: sdks/typescript
+
+      - name: Build
+        run: npm run build
+        working-directory: sdks/typescript
+
+      - name: Publish (OIDC Trusted Publishing — automatic provenance on this public repo)
+        run: npm publish
+        working-directory: sdks/typescript/${{ steps.pkg.outputs.dir }}
+
+      # --- Fallback: granular access token (documented, NOT the default path) ---
+      # If npm Trusted Publishing isn't yet registered for this repo+workflow,
+      # replace the OIDC publish step above with:
+      #
+      #   - name: Publish (scoped granular-token fallback)
+      #     env:
+      #       NODE_AUTH_TOKEN: ${{ secrets.NPM_GRANULAR_TOKEN }}
+      #     run: npm publish
+      #     working-directory: sdks/typescript/${{ steps.pkg.outputs.dir }}
+      #
+      # NPM_GRANULAR_TOKEN must be a token scoped to exactly
+      # @gs1belu/mpm-upload + @gs1belu/mpm-download — never an account-wide token.

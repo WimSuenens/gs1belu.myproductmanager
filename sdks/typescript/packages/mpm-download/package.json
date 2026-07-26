@@ -1,8 +1,8 @@
 {
   "name": "@gs1belu/mpm-download",
-  "version": "0.0.0",
-  "private": true,
+  "version": "1.0.0",
   "description": "Kiota-generated TypeScript client for the GS1 Belgium & Luxembourg My Product Manager Download API (v17).",
+  "license": "MIT",
   "type": "module",
   "types": "./dist/src/index.d.ts",
   "main": "./dist/src/index.js",
@@ -11,6 +11,26 @@
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.js"
     }
+  },
+  "files": [
+    "dist",
+    "!dist/**/__tests__/**",
+    "!dist/**/*.tsbuildinfo"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WimSuenens/gs1belu.myproductmanager.git",
+    "directory": "sdks/typescript/packages/mpm-download"
+  },
+  "homepage": "https://github.com/WimSuenens/gs1belu.myproductmanager/tree/main/sdks/typescript/packages/mpm-download#readme",
+  "bugs": {
+    "url": "https://github.com/WimSuenens/gs1belu.myproductmanager/issues"
+  },
+  "engines": {
+    "node": ">=22.14.0"
   },
   "scripts": {
     "build": "tsc -b",

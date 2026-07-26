@@ -60,14 +60,22 @@ The repo is PR-only; nothing lands on `main` except a CI-green PR (the maintaine
 included — direct pushes are blocked). The path:
 
 1. Branch off `main`.
-2. Open a PR. Fill in the PR template (declare which artifacts you touched).
+2. Open a PR with a **Conventional Commits–style title** (`feat: ...`, `fix: ...`,
+   `chore: ...`) — `commitlint` enforces this, since a squash-merge makes the title
+   *the* commit message release-please reads to attribute a change to a package.
+   Fill in the PR template (declare which artifacts you touched).
 3. Wait for **`ci-gate`** to go green. `ci-gate` is the single required check; it
    aggregates the path-filtered jobs (`schema-assert`, `dotnet`, `typescript`,
-   `regen-sync`) and passes when each needed job **succeeded or was skipped**.
+   `regen-sync`, `commitlint`, `release-assert`) and passes when each needed job
+   **succeeded or was skipped**.
 4. Make sure your branch is up to date with `main` (required before merge).
-5. Self-merge. Add a release entry per the release process if the change is
-   user-facing (the release tooling is owned by a later spec; this document will
-   point at it once it exists).
+5. Self-merge. No manual release entry needed: `release-please` (#53) maintains a
+   standing release PR from your merged commit, independently per package (see
+   `release-please-config.json`). Merging *that* PR is the deliberate "ship" action
+   — it tags and publishes exactly the packages whose files changed via the three
+   `publish-*.yml` OIDC workflows. First time only: the GitHub App + registry
+   trusted-publisher setup this depends on is a one-time manual sequence — see
+   [`docs/release-execution-checklist.md`](docs/release-execution-checklist.md).
 
 ## Branch protection (recorded so it is reproducible)
 

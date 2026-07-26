@@ -1,0 +1,57 @@
+name: Publish MCP server
+
+# Triggers on the `mcp-v*` tag release-please derives for the `mcp` component
+# (see release-please-config.json). One job, two sequential OIDC-gated steps —
+# PyPI publish, then MCP-registry publish — so the registry step only runs if
+# the PyPI publish it depends on actually succeeded (a step failure stops the
+# job by default; there is no `needs:` between steps within one job, so
+# keeping this a single job *is* the gate). The registry validates the
+# `mcp-name` marker (mcp/README.md) against the just-published PyPI JSON, so
+# the order is load-bearing, not cosmetic.
+
+on:
+  push:
+    tags:
+      - 'mcp-v*'
+
+permissions:
+  contents: read
+  id-token: write # OIDC for both PyPI Trusted Publishing and the MCP registry's GitHub-OIDC auth.
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/gs1belu-mpm-mcp
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+
+      - name: Build sdist + wheel
+        run: uv build --project mcp --out-dir mcp/dist
+
+      - name: Publish to PyPI (OIDC Trusted Publishing — pending publisher, keyless from v0.1.0)
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: mcp/dist
+
+      - name: Install mcp-publisher
+        # Pinned like sdks/kiota.version — a floating `latest` would make CI
+        # non-reproducible and let an upstream break land silently. Bump this
+        # deliberately (reviewed diff), same discipline as the Kiota CLI pin.
+        env:
+          MCP_PUBLISHER_VERSION: v1.8.0
+        run: |
+          curl -fsSL \
+            "https://github.com/modelcontextprotocol/registry/releases/download/${MCP_PUBLISHER_VERSION}/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" \
+            | tar xz mcp-publisher
+
+      - name: Authenticate to the MCP Registry (GitHub OIDC)
+        working-directory: mcp
+        run: ../mcp-publisher login github-oidc
+
+      - name: Publish to the MCP Registry (registers io.github.wimsuenens/gs1belu-mpm)
+        working-directory: mcp
+        run: ../mcp-publisher publish

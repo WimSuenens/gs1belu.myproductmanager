@@ -49,6 +49,7 @@ jobs:
       schemas: ${{ steps.filter.outputs.schemas }}
       sdks: ${{ steps.filter.outputs.sdks }}
       mcp: ${{ steps.filter.outputs.mcp }}
+      release: ${{ steps.filter.outputs.release }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -62,6 +63,23 @@ jobs:
             mcp:
               - 'mcp/**'
               - 'schemas/**'
+            release:
+              - 'release-please-config.json'
+              - '.release-please-manifest.json'
+              - '.github/workflows/release-please.yml'
+              - '.github/workflows/publish-*.yml'
+              - 'LICENSE'
+              - 'sdks/dotnet/Directory.Build.props'
+              - 'sdks/dotnet/**/*.csproj'
+              - 'sdks/dotnet/**/README.md'
+              - 'sdks/typescript/**/package.json'
+              - 'sdks/typescript/**/README.md'
+              - 'mcp/pyproject.toml'
+              - 'mcp/server.json'
+              - 'mcp/README.md'
+              - 'scripts/release_config.py'
+              - 'scripts/tests/test_release_assert.py'
+              - 'justfile'
 
   # CI face of the dead-patch guard (#7). Runs ONLY when schemas/** changed. It
   # reuses the existing local seam (`just test` -> the scripts/tests suite) rather
@@ -202,13 +220,68 @@ jobs:
           fi
           echo "regen-sync: committed clients match a fresh regeneration."
 
+  # Release-orchestration spec (#53). Validates the PR title against Conventional
+  # Commits — NOT path-filtered, since a squash-merge makes the title the commit
+  # release-please attributes, so every PR's title matters regardless of what it
+  # touches. Only meaningful on `pull_request` (there is no PR title on a `push`).
+  commitlint:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint PR title (Conventional Commits)
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          npm install --no-save @commitlint/cli@19 @commitlint/config-conventional@19
+          echo "$PR_TITLE" | npx --no-install commitlint --config commitlint.config.js
+
+  # Release-orchestration spec (#53). Statically proves the release/publish
+  # configuration is internally consistent — above all the tag-prefix contract
+  # binding each release-please component to the one publish workflow that
+  # listens for it (a mismatch here is the "green release-PR merge publishes
+  # nothing" failure mode). Reuses `just release-assert` (the same recipe a
+  # developer runs locally) rather than reimplementing the checks in YAML.
+  release-assert:
+    needs: changes
+    if: needs.changes.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Install just
+        uses: extractions/setup-just@v2
+      - name: Assert release/publish config is internally consistent
+        run: just release-assert
+      - name: release-please --dry-run (config + manifest parse; no PR opened)
+        # release-please fetches release-please-config.json/.release-please-manifest.json
+        # via the GitHub API from --target-branch's *committed* state, never the local
+        # checkout — so this must target the PR's own branch (not `main`), or a PR that
+        # introduces/changes the config can never dry-run against a `main` that doesn't
+        # have it yet (the exact bootstrapping trap this comment exists to avoid re-hitting).
+        # The branch name flows through an env var, never inlined into the script, per
+        # actionlint's script-injection guidance for untrusted `github.head_ref` values.
+        env:
+          TARGET_BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: |
+          npx --yes release-please@16 release-pr \
+            --repo-url="https://github.com/WimSuenens/gs1belu.myproductmanager" \
+            --target-branch="$TARGET_BRANCH" \
+            --token="${{ secrets.GITHUB_TOKEN }}" \
+            --dry-run
+      - name: actionlint (new release/publish workflows)
+        run: |
+          bash <(curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          ./actionlint .github/workflows/release-please.yml .github/workflows/publish-npm.yml .github/workflows/publish-csharp.yml .github/workflows/publish-mcp.yml
+
   # THE SINGLE REQUIRED CHECK. Runs always() so it can always report a status.
   # Green iff every needed job SUCCEEDED or was SKIPPED; red iff any needed job
   # genuinely failed or was cancelled. A path-filtered job that never ran counts
   # as a pass — that is the "succeeded-or-skipped" rule (#14 §5, user story 6).
   ci-gate:
     if: always()
-    needs: [changes, schema-assert, dotnet, typescript, mcp, regen-sync]
+    needs: [changes, schema-assert, dotnet, typescript, mcp, regen-sync, commitlint, release-assert]
     runs-on: ubuntu-latest
     steps:
       - name: Assert no needed job failed
