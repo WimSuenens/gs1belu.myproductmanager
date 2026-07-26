@@ -18,7 +18,7 @@ quickstart for each.
 | Artifact | Language | Consume via | Source |
 |---|---|---|---|
 | **C# SDK** | .NET | NuGet — `dotnet add package …` _(coming soon)_ | [`sdks/`](sdks/) → `dotnet/` |
-| **TypeScript SDK** | TS/JS | npm — `@gs1belu/mpm-upload`, `@gs1belu/mpm-download` _(coming soon)_ | [`sdks/`](sdks/) → `typescript/` |
+| **TypeScript SDK** | TS/JS | npm — `@gs1belu/mpm-upload`, `@gs1belu/mpm-fetch` _(coming soon)_ | [`sdks/`](sdks/) → `typescript/` |
 | **MCP server** | Python | `uvx` / the MCP registry _(coming soon)_ | [`mcp/`](mcp/) |
 
 The two SDKs are generated with [Kiota](https://learn.microsoft.com/openapi/kiota/)
