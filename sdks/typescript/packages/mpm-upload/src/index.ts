@@ -5,6 +5,7 @@ export type {
   Gs1BeluUploadClientDerivedOptions,
   Gs1BeluUploadClientAdapterOptions,
 } from "./gs1BeluUploadClient.js";
+export type { SunsetNotice } from "./auth/sunsetMiddleware.js";
 export type { Gs1BeluEnvironment } from "./environment.js";
 export type { Gs1BeluCredentials } from "./credentials.js";
 export { assertValidGtin, assertValidGln } from "./identifierValidation.js";
