@@ -40,6 +40,14 @@ build:
 test:
     uv run --project scripts pytest scripts/tests -q
 
+# Assert the release/publish configuration is internally consistent (#53) — the
+# tag-prefix contract binding release-please's components to the three publish
+# workflows, config<->manifest parity, version-source wiring, and registry
+# metadata presence. Reused verbatim by the `release-assert` CI job so CI and
+# local can never disagree about what "the release config is consistent" means.
+release-assert:
+    uv run --project scripts pytest scripts/tests/test_release_assert.py -q
+
 # Run the SDK auth + ergonomic-surface test suites (C# + TypeScript). Kept separate from `test`
 # (schema-assert's CI job only installs uv/just, not dotnet/node) rather than folded into it.
 test-sdks:

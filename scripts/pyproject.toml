@@ -6,6 +6,7 @@ requires-python = ">=3.10"
 dependencies = [
     "ruamel.yaml>=0.18",
     "jsonpath-ng>=1.6",
+    "tomli>=2.0; python_version < '3.11'",
 ]
 
 [dependency-groups]

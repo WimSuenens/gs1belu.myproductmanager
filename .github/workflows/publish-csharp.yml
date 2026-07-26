@@ -1,0 +1,72 @@
+name: Publish NuGet packages
+
+# Triggers on exactly the tag prefixes release-please derives for the two C#
+# components (see release-please-config.json). No regeneration needed here —
+# `generated/` is committed and regen-sync already proved it matches a fresh
+# `just gen` before the release PR merged; `dotnet pack` builds straight from
+# the tagged commit's committed sources.
+
+on:
+  push:
+    tags:
+      - 'Gs1Belu.MyProductManager.Upload-v*'
+      - 'Gs1Belu.MyProductManager.Download-v*'
+
+permissions:
+  contents: read
+  id-token: write # NuGet OIDC Trusted Publishing — no long-lived NuGet key stored anywhere.
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Resolve project from tag
+        id: pkg
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          case "$REF_NAME" in
+            Gs1Belu.MyProductManager.Upload-v*)
+              echo "project=sdks/dotnet/Gs1Belu.MyProductManager.Upload/Gs1Belu.MyProductManager.Upload.csproj" >> "$GITHUB_OUTPUT" ;;
+            Gs1Belu.MyProductManager.Download-v*)
+              echo "project=sdks/dotnet/Gs1Belu.MyProductManager.Download/Gs1Belu.MyProductManager.Download.csproj" >> "$GITHUB_OUTPUT" ;;
+            *)
+              echo "::error::publish-csharp: unrecognized tag '$REF_NAME' — no matching project."; exit 1 ;;
+          esac
+
+      - name: Pack (Release; includes .snupkg symbols per Directory.Build.props)
+        run: dotnet pack "${{ steps.pkg.outputs.project }}" --configuration Release --output artifacts
+
+      - name: NuGet login (OIDC -> short-lived, single-use API key)
+        id: login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ vars.NUGET_USER }}
+
+      - name: Push to NuGet.org (dotnet nuget push sends the .snupkg automatically)
+        run: |
+          dotnet nuget push "artifacts/*.nupkg" \
+            --api-key "${{ steps.login.outputs.NUGET_API_KEY }}" \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+
+      # --- Fallback: scoped API key (documented, NOT the default path) ---
+      # If NuGet Trusted Publishing isn't yet available/registered for this
+      # package, drop the NuGet/login@v1 step above and replace the push step
+      # with the same `dotnet nuget push` command, sourcing the key from a
+      # stored secret instead of the OIDC output:
+      #
+      #   - name: Push to NuGet.org (scoped-key fallback)
+      #     run: |
+      #       dotnet nuget push "artifacts/*.nupkg" \
+      #         --api-key "${{ secrets.NUGET_API_KEY }}" \
+      #         --source https://api.nuget.org/v3/index.json \
+      #         --skip-duplicate
+      #
+      # This is a drop-in swap — only the --api-key source changes.

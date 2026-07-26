@@ -1,0 +1,72 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
+  "name": "io.github.wimsuenens/gs1belu-mpm",
+  "description": "GS1 Belgium & Luxembourg My Product Manager (Upload + Download v17) as a small, agent-safe MCP tool surface. Unofficial — not affiliated with or endorsed by GS1.",
+  "repository": {
+    "url": "https://github.com/WimSuenens/gs1belu.myproductmanager",
+    "source": "github"
+  },
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "registryBaseUrl": "https://pypi.org",
+      "identifier": "gs1belu-mpm-mcp",
+      "version": "0.1.0",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "GS1BELU_ENVIRONMENT",
+          "description": "Target environment: uat or prod.",
+          "isRequired": true,
+          "isSecret": false
+        },
+        {
+          "name": "GS1BELU_API_VERSION",
+          "description": "API contract version segment (default v17).",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "GS1BELU_UPLOAD_CLIENT_ID",
+          "description": "Upload API OAuth2 client-credentials client id.",
+          "isRequired": true,
+          "isSecret": false
+        },
+        {
+          "name": "GS1BELU_UPLOAD_CLIENT_SECRET",
+          "description": "Upload API OAuth2 client-credentials client secret.",
+          "isRequired": true,
+          "isSecret": true
+        },
+        {
+          "name": "GS1BELU_UPLOAD_SUBSCRIPTION_KEY",
+          "description": "Upload API Ocp-Apim-Subscription-Key.",
+          "isRequired": true,
+          "isSecret": true
+        },
+        {
+          "name": "GS1BELU_DOWNLOAD_CLIENT_ID",
+          "description": "Download API OAuth2 client-credentials client id.",
+          "isRequired": true,
+          "isSecret": false
+        },
+        {
+          "name": "GS1BELU_DOWNLOAD_CLIENT_SECRET",
+          "description": "Download API OAuth2 client-credentials client secret.",
+          "isRequired": true,
+          "isSecret": true
+        },
+        {
+          "name": "GS1BELU_DOWNLOAD_SUBSCRIPTION_KEY",
+          "description": "Download API Ocp-Apim-Subscription-Key.",
+          "isRequired": true,
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "sdks/dotnet/Gs1Belu.MyProductManager.Upload": "1.0.0",
+  "sdks/dotnet/Gs1Belu.MyProductManager.Download": "1.0.0",
+  "sdks/typescript/packages/mpm-upload": "1.0.0",
+  "sdks/typescript/packages/mpm-download": "1.0.0",
+  "mcp": "0.1.0"
+}

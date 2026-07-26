@@ -1,0 +1,54 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "include-component-in-tag": true,
+  "tag-separator": "-",
+  "packages": {
+    "sdks/dotnet/Gs1Belu.MyProductManager.Upload": {
+      "release-type": "simple",
+      "component": "Gs1Belu.MyProductManager.Upload",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "Gs1Belu.MyProductManager.Upload.csproj"
+        }
+      ]
+    },
+    "sdks/dotnet/Gs1Belu.MyProductManager.Download": {
+      "release-type": "simple",
+      "component": "Gs1Belu.MyProductManager.Download",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "Gs1Belu.MyProductManager.Download.csproj"
+        }
+      ]
+    },
+    "sdks/typescript/packages/mpm-upload": {
+      "release-type": "node",
+      "component": "mpm-upload",
+      "package-name": "@gs1belu/mpm-upload"
+    },
+    "sdks/typescript/packages/mpm-download": {
+      "release-type": "node",
+      "component": "mpm-download",
+      "package-name": "@gs1belu/mpm-download"
+    },
+    "mcp": {
+      "release-type": "python",
+      "component": "mcp",
+      "package-name": "gs1belu-mpm-mcp",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "server.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "server.json",
+          "jsonpath": "$.packages[0].version"
+        }
+      ]
+    }
+  }
+}

@@ -15,10 +15,36 @@
     <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
 
+  <!--
+    NuGet registry-facing quality bundle (#53). Shared across both packages;
+    the version itself is NOT here — it lives per-package (each .csproj carries
+    its own x-release-please-version-annotated <Version>) so Upload and Download
+    bump independently under release-please rather than in lockstep.
+  -->
+  <PropertyGroup>
+    <Authors>Wim Suenens</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/WimSuenens/gs1belu.myproductmanager</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/WimSuenens/gs1belu.myproductmanager</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>gs1;gs1belu;my-product-manager;gtin;kiota</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <!-- SourceLink + symbol package: step-into-source debugging for consumers. -->
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <Deterministic>true</Deterministic>
+    <!-- Deterministic source paths only in CI builds — a local dev build should
+         still carry local paths for debugging. -->
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
   <ItemGroup>
     <!-- Pinned >= 2.0.0 to avoid the high-severity NU1903 vulnerable transitive
          dependency carried by older Kiota.Bundle releases. -->
     <PackageReference Include="Microsoft.Kiota.Bundle" Version="[2.0.0,)" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">

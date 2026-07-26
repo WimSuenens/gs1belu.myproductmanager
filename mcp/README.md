@@ -1,5 +1,12 @@
 # mcp/
 
+<!-- mcp-name: io.github.wimsuenens/gs1belu-mpm -->
+
+> [!IMPORTANT]
+> **Unofficial.** This project is a community effort and is not affiliated with,
+> endorsed by, or supported by GS1 in any way. "GS1" and "My Product Manager" are
+> the property of their respective owners. Use at your own risk.
+
 The **My Product Manager** MCP server — a standalone Python package (FastMCP,
 PrefectHQ v3.x) that stands apart from [`sdks/`](../sdks/) because it is a different
 language and, per map [#1](https://github.com/WimSuenens/gs1belu.myproductmanager/issues/1),
@@ -145,10 +152,11 @@ Python analog of the SDKs' fake-transport seam). See `mcp/tests/`:
   - `cli.py` — the `gs1belu-mpm-mcp` console entry point.
 - `tests/` — the in-memory `Client` + fake-transport suite described above.
 
-## Out of scope here
+## Publishing
 
-Publishing (PyPI package, `server.json`, the `mcp-name` README marker,
-`publish-mcp.yml`, PyPI trusted-publishing, MCP-registry listing) and release
-orchestration travel with [#12](https://github.com/WimSuenens/gs1belu.myproductmanager/issues/12)
-and [#13](https://github.com/WimSuenens/gs1belu.myproductmanager/issues/13) — this
-package is buildable, runnable, and tested, not published.
+Release-and-publish machinery — `server.json`, the `mcp-name` README marker above,
+`publish-mcp.yml`'s PyPI + MCP-registry OIDC publish, and the release-please version
+bump — is configured per [#53](https://github.com/WimSuenens/gs1belu.myproductmanager/issues/53).
+That spec stops **below the first live publish**: registering the PyPI pending
+publisher, the GitHub App, and the MCP registry namespace are human-run,
+prerequisite-gated steps, not something this repo's CI performs on its own.
