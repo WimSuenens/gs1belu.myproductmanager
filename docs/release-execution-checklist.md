@@ -42,11 +42,23 @@ is what pushes the tags and fires the publish workflows below.
 ## 3. npm (`publish-npm.yml` — `mpm-upload-v*` / `mpm-download-v*`)
 
 - [ ] Create the `@gs1belu` org on npmjs.com (if it doesn't already exist).
-- [ ] Register an npm **Trusted Publisher** for `@gs1belu/mpm-upload` and
-      `@gs1belu/mpm-download`, each pointing at this repo +
-      `.github/workflows/publish-npm.yml`.
-- [ ] Nothing else — no token, no secret. OIDC only (`id-token: write` is already
-      wired in the workflow).
+- [ ] **Publish each package once manually first**, with a classic/granular
+      token (`npm publish` from your machine or a one-off local run of the
+      commands in `publish-npm.yml`). npm's trusted-publisher config lives on
+      the *package's own* Settings page, which only exists once the package
+      has been published at least once — unlike PyPI, npm has no "pending
+      publisher, reserve the name in advance" flow. (Not fully confirmed in
+      npm's own docs at time of writing — verify this against the current
+      npmjs.com UI before relying on it; if it turns out a brand-new,
+      never-published scope *can* be pre-registered, skip the manual publish.)
+- [ ] Then, for each package: npmjs.com → the package page → **Settings** →
+      **Trusted Publisher** → **GitHub Actions** → fill in Organization/user
+      `WimSuenens`, Repository `gs1belu.myproductmanager`, Workflow filename
+      `publish-npm.yml` (filename only), Environment name **left blank** (this
+      workflow doesn't declare a GitHub Actions `environment:`), Allowed
+      actions: `npm publish`.
+- [ ] Nothing else — no token, no secret, once configured. OIDC only
+      (`id-token: write` is already wired in the workflow).
 - Fallback (only if Trusted Publishing isn't available yet): store a granular
   access token, scoped to exactly these two packages, as secret
   `NPM_GRANULAR_TOKEN`, and swap in the commented fallback step in
@@ -56,10 +68,18 @@ is what pushes the tags and fires the publish workflows below.
 
 - [ ] Confirm/create a nuget.org account; check the intended username is
       available.
-- [ ] Set repo **variable** `NUGET_USER` = that nuget.org username.
-- [ ] Register a NuGet Trusted Publishing policy on nuget.org linking this repo +
-      `.github/workflows/publish-csharp.yml` (per-package, for both
-      `Gs1Belu.MyProductManager.Upload` and `.Download`).
+- [ ] Set repo **secret** `NUGET_USER` = that nuget.org **username** (your
+      profile name, not your email) — nuget.org's own docs recommend storing
+      this as a secret even though it isn't independently sensitive.
+- [ ] On nuget.org: click your username → **Trusted Publishing** → add a policy
+      with Repository Owner `WimSuenens`, Repository `gs1belu.myproductmanager`,
+      Workflow File `publish-csharp.yml` (filename only, no path), Environment
+      left blank (this workflow doesn't use a GitHub Actions environment). One
+      policy covers both `Gs1Belu.MyProductManager.Upload` and `.Download`,
+      since it's owner-scoped, not package-scoped.
+- [ ] If nuget.org shows the policy as "pending" for 7 days (typical for a
+      private repo — shouldn't apply here since the repo is already public),
+      just run the workflow once within that window to activate it permanently.
 - Fallback (only if Trusted Publishing isn't yet available for this account):
   mint a scoped API key on nuget.org, store it as secret `NUGET_API_KEY`, and
   swap in the commented fallback step in `publish-csharp.yml` (drop-in — only
@@ -67,8 +87,14 @@ is what pushes the tags and fires the publish workflows below.
 
 ## 5. PyPI + MCP Registry (`publish-mcp.yml` — `mcp-v*`)
 
-- [ ] Reserve the `gs1belu-mpm-mcp` project name on pypi.org as a **pending
-      publisher**, pointing at this repo + `.github/workflows/publish-mcp.yml`.
+- [ ] Log into pypi.org → account sidebar → **Publishing** (not a project
+      sidebar — the project doesn't exist yet) → **GitHub Actions** tab → fill
+      in PyPI project name `gs1belu-mpm-mcp`, GitHub owner `WimSuenens`,
+      Repository `gs1belu.myproductmanager`, Workflow filename
+      `publish-mcp.yml`, Environment name `pypi` (matches the `environment:`
+      block already in `publish-mcp.yml`) → **Add**. This registers a
+      **pending publisher** — it doesn't reserve the name until first use; the
+      first successful publish converts it to a normal publisher automatically.
       No PyPI account token needed — OIDC only, keyless from the very first
       publish (v0.1.0).
 - [ ] No separate registration needed for the MCP Registry step: `mcp-publisher

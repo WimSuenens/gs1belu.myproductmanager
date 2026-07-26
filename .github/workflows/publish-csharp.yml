@@ -47,7 +47,7 @@ jobs:
         id: login
         uses: NuGet/login@v1
         with:
-          user: ${{ vars.NUGET_USER }}
+          user: ${{ secrets.NUGET_USER }}
 
       - name: Push to NuGet.org (dotnet nuget push sends the .snupkg automatically)
         run: |
