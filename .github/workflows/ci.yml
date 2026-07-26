@@ -48,6 +48,7 @@ jobs:
     outputs:
       schemas: ${{ steps.filter.outputs.schemas }}
       sdks: ${{ steps.filter.outputs.sdks }}
+      mcp: ${{ steps.filter.outputs.mcp }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -58,6 +59,9 @@ jobs:
               - 'schemas/**'
             sdks:
               - 'sdks/**'
+            mcp:
+              - 'mcp/**'
+              - 'schemas/**'
 
   # CI face of the dead-patch guard (#7). Runs ONLY when schemas/** changed. It
   # reuses the existing local seam (`just test` -> the scripts/tests suite) rather
@@ -144,6 +148,25 @@ jobs:
       - name: Run TypeScript SDK tests (auth + ergonomic surface)
         run: npm --prefix sdks/typescript run test
 
+  # MCP server build (#46). Unlike the SDKs, FastMCP needs no code generation — it
+  # reads the git-ignored effective spec directly via `from_openapi()` — so this job
+  # only needs `just gen-schemas` (step 1 alone) and uv, not dotnet/Kiota.
+  # Runs the in-memory Client + fake-httpx-transport test suite (see #46).
+  mcp:
+    needs: changes
+    if: needs.changes.outputs.mcp == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Install just
+        uses: extractions/setup-just@v2
+      - name: Build effective specs (just gen-schemas)
+        run: just gen-schemas
+      - name: Run MCP server test suite
+        run: just test-mcp
+
   # SDK analog of the schema-prep dead-patch guard (#7). Regenerates all four
   # clients fresh and fails if the working tree differs from what's committed —
   # a Kiota upgrade or a schema/overlay change is then a deliberate, reviewed PR
@@ -185,7 +208,7 @@ jobs:
   # as a pass — that is the "succeeded-or-skipped" rule (#14 §5, user story 6).
   ci-gate:
     if: always()
-    needs: [changes, schema-assert, dotnet, typescript, regen-sync]
+    needs: [changes, schema-assert, dotnet, typescript, mcp, regen-sync]
     runs-on: ubuntu-latest
     steps:
       - name: Assert no needed job failed
