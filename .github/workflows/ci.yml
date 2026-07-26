@@ -255,9 +255,15 @@ jobs:
       - name: Assert release/publish config is internally consistent
         run: just release-assert
       - name: release-please --dry-run (config + manifest parse; no PR opened)
+        # release-please fetches release-please-config.json/.release-please-manifest.json
+        # via the GitHub API from --target-branch's *committed* state, never the local
+        # checkout — so this must target the PR's own branch (not `main`), or a PR that
+        # introduces/changes the config can never dry-run against a `main` that doesn't
+        # have it yet (the exact bootstrapping trap this comment exists to avoid re-hitting).
         run: |
           npx --yes release-please@16 release-pr \
             --repo-url="https://github.com/WimSuenens/gs1belu.myproductmanager" \
+            --target-branch="${{ github.head_ref || github.ref_name }}" \
             --token="${{ secrets.GITHUB_TOKEN }}" \
             --dry-run
       - name: actionlint (new release/publish workflows)
