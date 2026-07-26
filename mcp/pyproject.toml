@@ -1,6 +1,6 @@
 [project]
 name = "gs1belu-mpm-mcp"
-version = "0.2.0"
+version = "0.2.1"
 description = "FastMCP server exposing GS1 Belgium & Luxembourg My Product Manager (Upload + Download v17) as a small, agent-safe MCP tool surface."
 readme = "README.md"
 license = "MIT"

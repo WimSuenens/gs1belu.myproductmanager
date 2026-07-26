@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/WimSuenens/gs1belu.myproductmanager/compare/mcp-v0.2.0...mcp-v0.2.1) (2026-07-26)
+
+
+### Bug Fixes
+
+* **release:** pin npm 11.5.1 and shorten MCP server.json description ([#63](https://github.com/WimSuenens/gs1belu.myproductmanager/issues/63)) ([69f30d1](https://github.com/WimSuenens/gs1belu.myproductmanager/commit/69f30d1d80495d22c7e24f204cec36ad4d132c83))
+
 ## [0.2.0](https://github.com/WimSuenens/gs1belu.myproductmanager/compare/mcp-v0.1.0...mcp-v0.2.0) (2026-07-26)
 
 
