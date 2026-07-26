@@ -29,6 +29,15 @@ jobs:
 
       - uses: astral-sh/setup-uv@v5
 
+      - name: Install just
+        uses: extractions/setup-just@v2
+
+      # hatch_build.py's CustomBuildHook copies these into the wheel/sdist at build
+      # time (#70) — they must exist on disk before `uv build` runs, same as the `mcp`
+      # job in ci.yml.
+      - name: Build effective specs (just gen-schemas)
+        run: just gen-schemas
+
       - name: Build sdist + wheel
         run: uv build --project mcp --out-dir mcp/dist
 
