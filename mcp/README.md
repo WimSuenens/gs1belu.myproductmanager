@@ -1,6 +1,6 @@
 # mcp/
 
-<!-- mcp-name: io.github.wimsuenens/gs1belu-mpm -->
+<!-- mcp-name: io.github.WimSuenens/gs1belu-mpm -->
 
 > [!IMPORTANT]
 > **Unofficial.** This project is a community effort and is not affiliated with,
