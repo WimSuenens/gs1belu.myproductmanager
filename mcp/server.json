@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
   "name": "io.github.wimsuenens/gs1belu-mpm",
-  "description": "GS1 Belgium & Luxembourg My Product Manager (Upload + Download v17) as a small, agent-safe MCP tool surface. Unofficial — not affiliated with or endorsed by GS1.",
+  "description": "Unofficial MCP tool surface for GS1 Belgium & Luxembourg's My Product Manager API (v17).",
   "repository": {
     "url": "https://github.com/WimSuenens/gs1belu.myproductmanager",
     "source": "github"
