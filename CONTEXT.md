@@ -85,19 +85,23 @@ base URL, token host, or OAuth `audience`. See [`sdks/README.md`](sdks/README.md
 
 ### Access-token provider
 
-The hand-written component of the [ergonomic surface](#ergonomic-surface) that fetches, caches, and
-proactively refreshes the OAuth2 client-credentials Bearer token: `IAccessTokenProvider` (C#) /
-`AccessTokenProvider` (TS), plugged into Kiota's `BaseBearerTokenAuthenticationProvider`. Refreshes
-on a skew margin before the token's runtime `expires_in` elapses (never a hardcoded lifetime) and
-coalesces concurrent callers onto a single in-flight fetch, so a client is never disconnected for
-re-authenticating too often — the failure mode the GS1 manuals warn against.
+The hand-written component that fetches, caches, and proactively refreshes the OAuth2
+client-credentials Bearer token: `IAccessTokenProvider` (C#) / `AccessTokenProvider` (TS), plugged
+into Kiota's `BaseBearerTokenAuthenticationProvider` as part of the SDKs' [ergonomic
+surface](#ergonomic-surface); `Gs1BeluAuth` (Python, an `httpx.Auth`) re-expresses the same contract
+for the [MCP server](mcp/README.md), which is independent of the SDKs but shares this design.
+Refreshes on a skew margin before the token's runtime `expires_in` elapses (never a hardcoded
+lifetime) and coalesces concurrent callers onto a single in-flight fetch, so a client is never
+disconnected for re-authenticating too often — the failure mode the GS1 manuals warn against.
 
 ### Credential set
 
-The three-field `{ clientId, clientSecret, subscriptionKey }` a consumer supplies per API client
-(Upload, Download) to the [ergonomic surface](#ergonomic-surface)'s public constructor. Upload and
-Download credentials are never assumed to be shared, since neither vendor manual states whether
-they're the same underlying APIM subscription.
+The three-field `{ clientId, clientSecret, subscriptionKey }` (or, for the Python MCP server,
+`client_id`/`client_secret`/`subscription_key` loaded from `GS1BELU_<API>_*` environment variables)
+a consumer supplies per API client (Upload, Download) — to the [ergonomic
+surface](#ergonomic-surface)'s public constructor in the SDKs, or per sub-server in the [MCP
+server](mcp/README.md). Upload and Download credentials are never assumed to be shared, since
+neither vendor manual states whether they're the same underlying APIM subscription.
 
 ## Structural rules
 
