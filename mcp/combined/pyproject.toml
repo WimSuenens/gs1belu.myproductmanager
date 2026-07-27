@@ -1,6 +1,6 @@
 [project]
 name = "gs1belu-mpm-mcp"
-version = "0.3.2"
+version = "0.4.0"
 description = "Deprecated — split into gs1belu-mpm-upload-mcp and gs1belu-mpm-download-mcp. FastMCP server exposing GS1 Belgium & Luxembourg My Product Manager (Upload + Download v17) as a small, agent-safe MCP tool surface."
 readme = "README.md"
 license = "MIT"

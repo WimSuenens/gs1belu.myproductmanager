@@ -3,7 +3,7 @@
   "sdks/dotnet/Gs1Belu.MyProductManager.Download": "1.2.0",
   "sdks/typescript/packages/mpm-upload": "1.2.0",
   "sdks/typescript/packages/mpm-download": "1.2.0",
-  "mcp/combined": "0.3.2",
-  "mcp/upload": "0.1.0",
-  "mcp/download": "0.1.0"
+  "mcp/combined": "0.4.0",
+  "mcp/upload": "0.2.0",
+  "mcp/download": "0.2.0"
 }
