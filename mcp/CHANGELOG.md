@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2](https://github.com/WimSuenens/gs1belu.myproductmanager/compare/mcp-v0.3.1...mcp-v0.3.2) (2026-07-27)
+
+
+### Bug Fixes
+
+* **mcp:** keep uv.lock in sync with release version bumps ([#88](https://github.com/WimSuenens/gs1belu.myproductmanager/issues/88)) ([d621ff8](https://github.com/WimSuenens/gs1belu.myproductmanager/commit/d621ff8f1c5aa563a0d90fd554febf7c289cbd2a))
+
 ## [0.3.1](https://github.com/WimSuenens/gs1belu.myproductmanager/compare/mcp-v0.3.0...mcp-v0.3.1) (2026-07-26)
 
 
