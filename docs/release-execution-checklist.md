@@ -2,10 +2,13 @@
 
 Everything release-please and the three `publish-*.yml` workflows need to actually
 fire is **configured** by [#53](https://github.com/WimSuenens/gs1belu.myproductmanager/issues/53).
-None of it is **activated** yet — that's a deliberate scope line (see the issue's
-"Out of Scope" section): a live OIDC publish can't be exercised in CI without really
-publishing, so the human steps below are a one-time, manual, checked-off-by-hand
-sequence, not something a merge triggers automatically.
+Most of it wasn't **activated** yet as of this writing — that's a deliberate scope
+line (see the issue's "Out of Scope" section): a live OIDC publish can't be exercised
+in CI without really publishing, so the human steps below are a one-time, manual,
+checked-off-by-hand sequence, not something a merge triggers automatically. §5's MCP
+publishing has since partially activated (see below) — the pattern generalizes: each
+package needs its own trust relationship registered independently before its first
+tag can publish.
 
 Until every item below is done, the workflows fail **safely and visibly** (a red X
 in the Actions tab, an auth error) rather than silently publishing something wrong.
@@ -85,21 +88,45 @@ is what pushes the tags and fires the publish workflows below.
   swap in the commented fallback step in `publish-csharp.yml` (drop-in — only
   the `--api-key` source changes).
 
-## 5. PyPI + MCP Registry (`publish-mcp.yml` — `mcp-v*`)
+## 5. PyPI + MCP Registry (`publish-mcp.yml` — `mcp-v*` / `mcp-upload-v*` / `mcp-download-v*`)
 
-- [ ] Log into pypi.org → account sidebar → **Publishing** (not a project
-      sidebar — the project doesn't exist yet) → **GitHub Actions** tab → fill
-      in PyPI project name `gs1belu-mpm-mcp`, GitHub owner `WimSuenens`,
-      Repository `gs1belu.myproductmanager`, Workflow filename
-      `publish-mcp.yml`, Environment name `pypi` (matches the `environment:`
-      block already in `publish-mcp.yml`) → **Add**. This registers a
-      **pending publisher** — it doesn't reserve the name until first use; the
-      first successful publish converts it to a normal publisher automatically.
-      No PyPI account token needed — OIDC only, keyless from the very first
-      publish (v0.1.0).
-- [ ] No separate registration needed for the MCP Registry step: `mcp-publisher
-      login github-oidc` authenticates as this repository via GitHub OIDC, which
-      is sufficient to claim the `io.github.WimSuenens/gs1belu-mpm` namespace on
+One parameterized workflow (`publish-mcp.yml`) publishes **three** independent PyPI
+projects — the deprecated combined server plus its two successors (map
+[#82](https://github.com/WimSuenens/gs1belu.myproductmanager/issues/82)). Each PyPI
+project needs its **own** pending-publisher registration; all three point at the same
+workflow filename and environment name, since that's the one workflow that resolves
+which package to build from the tag prefix.
+
+- [x] `gs1belu-mpm-mcp` (the combined server, `mcp-v*`) — confirmed live: `mcp-v0.4.0` published successfully.
+- [x] `gs1belu-mpm-upload-mcp` (`mcp-upload-v*`) — confirmed live: `mcp-upload-v0.2.0` published successfully.
+- [ ] `gs1belu-mpm-download-mcp` (`mcp-download-v*`) — **not yet registered**: `mcp-download-v0.2.0`'s publish job failed with `403 Invalid API Token: OIDC scoped token is not valid for project 'gs1belu-mpm-download-mcp'`, confirming no pending publisher exists for this project name yet. Once registered, re-run the failed job (`gh run rerun <run-id> --failed`) rather than pushing a new tag.
+
+For each project: log into pypi.org → account sidebar → **Publishing** (not a
+project sidebar — the project doesn't exist yet) → **GitHub Actions** tab → fill in:
+
+| Field | Value |
+|---|---|
+| PyPI project name | `gs1belu-mpm-mcp`, `gs1belu-mpm-upload-mcp`, or `gs1belu-mpm-download-mcp` |
+| GitHub owner | `WimSuenens` |
+| Repository | `gs1belu.myproductmanager` |
+| Workflow filename | `publish-mcp.yml` |
+| Environment name | `pypi` (matches the `environment:` block already in `publish-mcp.yml`) |
+
+→ **Add**. This registers a **pending publisher** — it doesn't reserve the name until
+first use; the first successful publish converts it to a normal publisher
+automatically. No PyPI account token needed — OIDC only, keyless from the very first
+publish.
+
+⚠️ Do this **before** merging a standing release-please PR that would tag any of
+`mcp-v*`/`mcp-upload-v*`/`mcp-download-v*` for a package whose publisher isn't
+registered yet — otherwise that package's publish job fails with a visible auth error
+(safely; it doesn't affect the other packages' publishes) and has to be re-run once
+the publisher is registered.
+
+- [ ] No separate registration needed for the MCP Registry step, for any of the
+      three: `mcp-publisher login github-oidc` authenticates as this repository via
+      GitHub OIDC, which is sufficient to claim each of `io.github.WimSuenens/gs1belu-mpm`,
+      `.../gs1belu-mpm-upload`, and `.../gs1belu-mpm-download` on that package's own
       first publish.
 - [ ] Periodically re-check the pinned `mcp-publisher` version in
       `publish-mcp.yml` (`MCP_PUBLISHER_VERSION`) against
