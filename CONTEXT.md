@@ -89,19 +89,25 @@ The hand-written component that fetches, caches, and proactively refreshes the O
 client-credentials Bearer token: `IAccessTokenProvider` (C#) / `AccessTokenProvider` (TS), plugged
 into Kiota's `BaseBearerTokenAuthenticationProvider` as part of the SDKs' [ergonomic
 surface](#ergonomic-surface); `Gs1BeluAuth` (Python, an `httpx.Auth`) re-expresses the same contract
-for the [MCP server](mcp/README.md), which is independent of the SDKs but shares this design.
+for the [Upload](mcp/upload/README.md)/[Download](mcp/download/README.md) MCP servers, which are
+independent of the SDKs but share this design, and of each other — `Gs1BeluAuth` is
+single-sourced in [`mcp/shared/`](mcp/shared/README.md) and vendored byte-identically
+into both.
 Refreshes on a skew margin before the token's runtime `expires_in` elapses (never a hardcoded
 lifetime) and coalesces concurrent callers onto a single in-flight fetch, so a client is never
 disconnected for re-authenticating too often — the failure mode the GS1 manuals warn against.
 
 ### Credential set
 
-The three-field `{ clientId, clientSecret, subscriptionKey }` (or, for the Python MCP server,
+The three-field `{ clientId, clientSecret, subscriptionKey }` (or, for the Python MCP servers,
 `client_id`/`client_secret`/`subscription_key` loaded from `GS1BELU_<API>_*` environment variables)
 a consumer supplies per API client (Upload, Download) — to the [ergonomic
-surface](#ergonomic-surface)'s public constructor in the SDKs, or per sub-server in the [MCP
-server](mcp/README.md). Upload and Download credentials are never assumed to be shared, since
-neither vendor manual states whether they're the same underlying APIM subscription.
+surface](#ergonomic-surface)'s public constructor in the SDKs, or as the one credential set each
+independent [Upload](mcp/upload/README.md)/[Download](mcp/download/README.md) MCP server process
+loads. Upload and Download credentials are never assumed to be shared, since neither vendor manual
+states whether they're the same underlying APIM subscription — reinforced by the MCP split (map
+[#82](https://github.com/WimSuenens/gs1belu.myproductmanager/issues/82)), where each server reads
+only its own role's prefix.
 
 ### Sunset monitoring
 
@@ -110,8 +116,9 @@ an API version will stop responding — the Download manual documents this as be
 practice to monitor, including preparing for a date already in the past (`docs/
 research/gs1-api-facts.md` §"Sunset header"). A sibling of each package's
 request/response logging observer, added to the same pipeline seam: `SunsetHandler`
-(C#), `SunsetMiddleware` (TS), `warn_on_sunset` (Python, an httpx response hook in
-`mcp/`). Purely observational — it never alters, retries, or fails a request. An
+(C#), `SunsetMiddleware` (TS), `warn_on_sunset` (Python, an httpx response hook
+single-sourced in [`mcp/shared/`](mcp/shared/README.md) and vendored into both MCP
+servers). Purely observational — it never alters, retries, or fails a request. An
 absent header costs nothing beyond the lookup; a present one is parsed as an
 HTTP-date and surfaced as a structured `SunsetNotice` (raw value, parsed instant,
 already-past flag) through the package's existing callback/logger seam, with an
@@ -123,6 +130,9 @@ unparseable value surfaced as its raw string rather than dropped. See issue
 - **Two documents, never merged.** `schemas/upload/` and `schemas/download/` are
   independent source-of-truth trees with distinct `info.title` and non-overlapping
   `servers[].url`. Each maps to its own downstream consumer (one Kiota client per doc,
-  one FastMCP sub-server per spec). Merging them is explicitly rejected.
+  one independent MCP server per API role — [`mcp/upload/`](mcp/upload/README.md) /
+  [`mcp/download/`](mcp/download/README.md), no longer mounted under a shared parent
+  as of map [#82](https://github.com/WimSuenens/gs1belu.myproductmanager/issues/82)).
+  Merging them is explicitly rejected.
 - **Version per file.** A new version lands as `<version>.yaml` beside the previous
   one; nothing is overwritten (see the [runbook](docs/schema-ingestion-runbook.md)).

@@ -1,4 +1,4 @@
-# mcp/
+# mcp/combined/
 
 <!-- mcp-name: io.github.WimSuenens/gs1belu-mpm -->
 
@@ -7,17 +7,97 @@
 > endorsed by, or supported by GS1 in any way. "GS1" and "My Product Manager" are
 > the property of their respective owners. Use at your own risk.
 
+> [!WARNING]
+> **Deprecated.** This combined package (`gs1belu-mpm-mcp`) has been split into two
+> independent, single-role successors (map [#82](https://github.com/WimSuenens/gs1belu.myproductmanager/issues/82)):
+>
+> - **[`gs1belu-mpm-upload-mcp`](../upload/)** — the provider-role tools
+>   (`upsert_and_await_validation`, `get_trade_item_by_gtin`).
+> - **[`gs1belu-mpm-download-mcp`](../download/)** — the recipient-role tool
+>   (`search_trade_items`).
+>
+> This package will receive one final `0.4.0` release and then only critical fixes.
+> New integrations should install whichever successor(s) match their role instead —
+> see "Migrating to the split servers" below. The package stays installable/pinnable
+> (PyPI-archived, not yanked) and its MCP registry entry stays discoverable
+> (`status: deprecated`, not deleted) so an existing pin never breaks.
+
 The **My Product Manager** MCP server — a standalone Python package (FastMCP,
-PrefectHQ v3.x) that stands apart from [`sdks/`](../sdks/) because it is a different
+PrefectHQ v3.x) that stands apart from [`sdks/`](../../sdks/) because it is a different
 language and, per map [#1](https://github.com/WimSuenens/gs1belu.myproductmanager/issues/1),
 independent of the SDKs.
 
 It assembles its tools **at runtime** from the same git-ignored
-[effective specs](../CONTEXT.md#effective-spec) under [`schemas/`](../schemas/) that
+[effective specs](../../CONTEXT.md#effective-spec) under [`schemas/`](../../schemas/) that
 Kiota reads for the SDKs, via `FastMCP.from_openapi()` — one sub-server per document,
 mounted on a parent (server composition, never a merged document). Unlike the SDKs,
 this needs **no code-generation step**: `just gen` step 1 (the schema-prep build) is
 the only prerequisite.
+
+## Migrating to the split servers
+
+Migration is **zero-rename**: split the one client entry into two, and split the
+shared env block along the `GS1BELU_UPLOAD_*` / `GS1BELU_DOWNLOAD_*` prefixes that
+already exist. No variable is renamed; `GS1BELU_ENVIRONMENT` and
+`GS1BELU_API_VERSION` stay shared and unprefixed. **Install only the server(s) your
+role actually needs** — a data-supplier who never reads others' published items never
+has to stand up the Download server, and vice versa.
+
+Before (`.mcp.json`, one combined server):
+
+```json
+{
+  "mcpServers": {
+    "gs1belu-mpm": {
+      "command": "uvx",
+      "args": ["gs1belu-mpm-mcp"],
+      "env": {
+        "GS1BELU_ENVIRONMENT": "uat",
+        "GS1BELU_UPLOAD_CLIENT_ID": "...",
+        "GS1BELU_UPLOAD_CLIENT_SECRET": "...",
+        "GS1BELU_UPLOAD_SUBSCRIPTION_KEY": "...",
+        "GS1BELU_DOWNLOAD_CLIENT_ID": "...",
+        "GS1BELU_DOWNLOAD_CLIENT_SECRET": "...",
+        "GS1BELU_DOWNLOAD_SUBSCRIPTION_KEY": "..."
+      }
+    }
+  }
+}
+```
+
+After (two independent servers — install `gs1belu-mpm-upload-mcp` and/or
+`gs1belu-mpm-download-mcp` depending on which role(s) you actually hold):
+
+```json
+{
+  "mcpServers": {
+    "gs1belu-mpm-upload": {
+      "command": "uvx",
+      "args": ["gs1belu-mpm-upload-mcp"],
+      "env": {
+        "GS1BELU_ENVIRONMENT": "uat",
+        "GS1BELU_UPLOAD_CLIENT_ID": "...",
+        "GS1BELU_UPLOAD_CLIENT_SECRET": "...",
+        "GS1BELU_UPLOAD_SUBSCRIPTION_KEY": "..."
+      }
+    },
+    "gs1belu-mpm-download": {
+      "command": "uvx",
+      "args": ["gs1belu-mpm-download-mcp"],
+      "env": {
+        "GS1BELU_ENVIRONMENT": "uat",
+        "GS1BELU_DOWNLOAD_CLIENT_ID": "...",
+        "GS1BELU_DOWNLOAD_CLIENT_SECRET": "...",
+        "GS1BELU_DOWNLOAD_SUBSCRIPTION_KEY": "..."
+      }
+    }
+  }
+}
+```
+
+See [`../upload/README.md`](../upload/README.md) and
+[`../download/README.md`](../download/README.md) for each server's own tool surface,
+auth, and quickstart.
 
 ## The 3-tool composite-only surface
 
@@ -166,7 +246,7 @@ fixtures (e.g. that polling actually settles out of `pendingValidation`).
 `just test-mcp` drives the assembled parent server through FastMCP's **in-memory
 `Client`**, with a fake `httpx` transport and a mocked token endpoint injected under
 each sub-server's `AsyncClient` — no network, no live GS1, no subprocess (the direct
-Python analog of the SDKs' fake-transport seam). See `mcp/tests/`:
+Python analog of the SDKs' fake-transport seam). See [`tests/`](tests/):
 
 - `test_tool_surface.py` — pins the exact 3-tool list; the raw POST/search operations
   are absent.
@@ -216,8 +296,9 @@ Python analog of the SDKs' fake-transport seam). See `mcp/tests/`:
 ## Publishing
 
 Release-and-publish machinery — `server.json`, the `mcp-name` README marker above,
-`publish-mcp.yml`'s PyPI + MCP-registry OIDC publish, and the release-please version
-bump — is configured per [#53](https://github.com/WimSuenens/gs1belu.myproductmanager/issues/53).
+`publish-mcp.yml`'s PyPI + MCP-registry OIDC publish (parameterized across all three
+`mcp*` packages, #82), and the release-please `mcp` component/tag (`mcp-v*`) — is
+configured per [#53](https://github.com/WimSuenens/gs1belu.myproductmanager/issues/53).
 The published sdist and wheel bundle the effective specs directly (#70), via
 `hatch_build.py` + `pyproject.toml`'s `artifacts` force-include, so `uvx
 gs1belu-mpm-mcp` needs no repo checkout at all.
@@ -225,4 +306,21 @@ gs1belu-mpm-mcp` needs no repo checkout at all.
 That spec stops **below the first live publish**: registering the PyPI pending
 publisher, the GitHub App, and the MCP registry namespace are human-run,
 prerequisite-gated steps, not something this repo's CI performs on its own — see
-[`docs/release-execution-checklist.md`](../docs/release-execution-checklist.md).
+[`docs/release-execution-checklist.md`](../../docs/release-execution-checklist.md).
+
+### Deprecation sequencing (#82)
+
+Per map [#82](https://github.com/WimSuenens/gs1belu.myproductmanager/issues/82)'s
+"Deprecation & migration path" decision, the wind-down is a **forced sequence**, so no
+consumer is ever pointed at a successor that doesn't exist yet:
+
+1. The successors (`gs1belu-mpm-upload-mcp`, `gs1belu-mpm-download-mcp`) publish their
+   first `0.1.0` release.
+2. *Then* this package cuts its final `0.4.0` (this deprecation banner + migration
+   guide, `Development Status :: 7 - Inactive`).
+3. This package is archived on PyPI (not yanked — stays installable/pinnable) and its
+   MCP registry entry is set to `status: deprecated` (not deleted), naming both
+   successor IDs — both steps run outside release-please, by hand.
+4. *Only then* is the `mcp` release-please component/trigger retired — until that
+   point it stays alive alongside `mcp-upload`/`mcp-download` so this final release
+   remains cuttable.

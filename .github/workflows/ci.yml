@@ -74,9 +74,15 @@ jobs:
               - 'sdks/dotnet/**/README.md'
               - 'sdks/typescript/**/package.json'
               - 'sdks/typescript/**/README.md'
-              - 'mcp/pyproject.toml'
-              - 'mcp/server.json'
-              - 'mcp/README.md'
+              - 'mcp/combined/pyproject.toml'
+              - 'mcp/combined/server.json'
+              - 'mcp/combined/README.md'
+              - 'mcp/upload/pyproject.toml'
+              - 'mcp/upload/server.json'
+              - 'mcp/upload/README.md'
+              - 'mcp/download/pyproject.toml'
+              - 'mcp/download/server.json'
+              - 'mcp/download/README.md'
               - 'scripts/release_config.py'
               - 'scripts/tests/test_release_assert.py'
               - 'justfile'
@@ -166,10 +172,12 @@ jobs:
       - name: Run TypeScript SDK tests (auth + ergonomic surface)
         run: npm --prefix sdks/typescript run test
 
-  # MCP server build (#46). Unlike the SDKs, FastMCP needs no code generation — it
-  # reads the git-ignored effective spec directly via `from_openapi()` — so this job
-  # only needs `just gen-schemas` (step 1 alone) and uv, not dotnet/Kiota.
-  # Runs the in-memory Client + fake-httpx-transport test suite (see #46).
+  # MCP server build (#46, split into independent Upload/Download servers by #82).
+  # Unlike the SDKs, FastMCP needs no code generation — it reads the git-ignored
+  # effective spec directly via `from_openapi()` — so this job only needs
+  # `just gen-schemas` (step 1 alone) and uv, not dotnet/Kiota. `just test-mcp` runs
+  # the in-memory Client + fake-httpx-transport suite for every uv workspace member
+  # under `mcp/` (shared/, upload/, download/, the deprecated combined/) in one call.
   mcp:
     needs: changes
     if: needs.changes.outputs.mcp == 'true'

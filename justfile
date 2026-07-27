@@ -56,14 +56,31 @@ test-sdks:
     npm --prefix sdks/typescript run build
     npm --prefix sdks/typescript run test
 
-# Run the MCP server's test suite: the assembled server driven through FastMCP's
-# in-memory Client against a fake httpx transport (no network, no live GS1). Needs the
-# git-ignored effective specs from `just gen` step 1 to exist first.
+# Run the MCP servers' test suites (#82's split): shared/'s own unit tests, then each
+# server's assembled-server suite driven through FastMCP's in-memory Client against a
+# fake httpx transport (no network, no live GS1). Separate `uv run` invocations, not
+# one combined pytest call, because same-named test modules across mcp/*/tests/ (e.g.
+# test_config.py) collide under a single pytest collection root. Needs the git-ignored
+# effective specs from `just gen` step 1 to exist first.
 test-mcp:
-    uv run --project mcp pytest mcp/tests -q
+    uv run --project mcp/shared pytest mcp/shared/tests -q
+    uv run --project mcp/upload pytest mcp/upload/tests -q
+    uv run --project mcp/download pytest mcp/download/tests -q
+    uv run --project mcp/combined pytest mcp/combined/tests -q
 
-# Launch the MCP server locally over stdio. Needs `just gen` to have run first and the
-# GS1BELU_* credential env vars set (see mcp/README.md) — there is no live-network smoke
-# test in CI, this is for local/manual use.
-run-mcp:
-    uv run --project mcp gs1belu-mpm-mcp
+# Launch the Upload MCP server locally over stdio. Needs `just gen` to have run first
+# and GS1BELU_ENVIRONMENT + GS1BELU_UPLOAD_* set (see mcp/upload/README.md) — there is
+# no live-network smoke test in CI, this is for local/manual use.
+run-mcp-upload:
+    uv run --project mcp/upload gs1belu-mpm-upload-mcp
+
+# Launch the Download MCP server locally over stdio. Needs GS1BELU_ENVIRONMENT +
+# GS1BELU_DOWNLOAD_* set (see mcp/download/README.md).
+run-mcp-download:
+    uv run --project mcp/download gs1belu-mpm-download-mcp
+
+# Launch the deprecated combined MCP server locally over stdio (mcp/combined/) — kept
+# only until its final 0.4.0 deprecation release ships (#82). New integrations should
+# use run-mcp-upload / run-mcp-download instead.
+run-mcp-combined:
+    uv run --project mcp/combined gs1belu-mpm-mcp

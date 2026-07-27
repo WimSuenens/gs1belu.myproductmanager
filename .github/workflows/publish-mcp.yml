@@ -1,18 +1,27 @@
 name: Publish MCP server
 
-# Triggers on the `mcp-v*` tag release-please derives for the `mcp` component
-# (see release-please-config.json). One job, two sequential OIDC-gated steps —
-# PyPI publish, then MCP-registry publish — so the registry step only runs if
-# the PyPI publish it depends on actually succeeded (a step failure stops the
-# job by default; there is no `needs:` between steps within one job, so
-# keeping this a single job *is* the gate). The registry validates the
-# `mcp-name` marker (mcp/README.md) against the just-published PyPI JSON, so
-# the order is load-bearing, not cosmetic.
+# Triggers on any of the three `mcp*-v*` tags release-please derives for the `mcp`,
+# `mcp-upload`, and `mcp-download` components (see release-please-config.json, #82).
+# One parameterized workflow instead of three near-duplicates: a `case $REF_NAME`
+# step resolves which package directory/PyPI project the tag belongs to, then the
+# rest of the job runs unparameterized against that resolved directory.
+#
+# One job, two sequential OIDC-gated steps per publish — PyPI publish, then
+# MCP-registry publish — so the registry step only runs if the PyPI publish it
+# depends on actually succeeded (a step failure stops the job by default; there is no
+# `needs:` between steps within one job, so keeping this a single job *is* the gate).
+# The registry validates the `mcp-name` marker (each package's README) against the
+# just-published PyPI JSON, so the order is load-bearing, not cosmetic.
+#
+# All three packages' pending PyPI trusted publishers bind to this exact filename
+# (`publish-mcp.yml`) — renaming it breaks that trust relationship for all three.
 
 on:
   push:
     tags:
       - 'mcp-v*'
+      - 'mcp-upload-v*'
+      - 'mcp-download-v*'
 
 permissions:
   contents: read
@@ -23,7 +32,12 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/gs1belu-mpm-mcp
+      url: >-
+        ${{
+          startsWith(github.ref_name, 'mcp-upload-v') && 'https://pypi.org/p/gs1belu-mpm-upload-mcp' ||
+          startsWith(github.ref_name, 'mcp-download-v') && 'https://pypi.org/p/gs1belu-mpm-download-mcp' ||
+          'https://pypi.org/p/gs1belu-mpm-mcp'
+        }}
     steps:
       - uses: actions/checkout@v4
 
@@ -32,19 +46,42 @@ jobs:
       - name: Install just
         uses: extractions/setup-just@v2
 
+      - name: Resolve package directory from the tag
+        id: resolve
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          case "$REF_NAME" in
+            mcp-upload-v*)
+              echo "dir=mcp/upload" >> "$GITHUB_OUTPUT"
+              ;;
+            mcp-download-v*)
+              echo "dir=mcp/download" >> "$GITHUB_OUTPUT"
+              ;;
+            mcp-v*)
+              echo "dir=mcp/combined" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "::error::publish-mcp: unrecognized tag '$REF_NAME' — no package directory mapping."
+              exit 1
+              ;;
+          esac
+
       # hatch_build.py's CustomBuildHook copies these into the wheel/sdist at build
       # time (#70) — they must exist on disk before `uv build` runs, same as the `mcp`
-      # job in ci.yml.
+      # job in ci.yml. Only mcp/upload and mcp/combined actually consume this (#75's
+      # Download server bundles no spec), but building it unconditionally is simpler
+      # than a second tag-based branch and costs nothing when unused.
       - name: Build effective specs (just gen-schemas)
         run: just gen-schemas
 
       - name: Build sdist + wheel
-        run: uv build --project mcp --out-dir mcp/dist
+        run: uv build --project "${{ steps.resolve.outputs.dir }}" --out-dir "${{ steps.resolve.outputs.dir }}/dist"
 
       - name: Publish to PyPI (OIDC Trusted Publishing — pending publisher, keyless from v0.1.0)
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          packages-dir: mcp/dist
+          packages-dir: ${{ steps.resolve.outputs.dir }}/dist
 
       - name: Install mcp-publisher
         # Pinned like sdks/kiota.version — a floating `latest` would make CI
@@ -58,9 +95,9 @@ jobs:
             | tar xz mcp-publisher
 
       - name: Authenticate to the MCP Registry (GitHub OIDC)
-        working-directory: mcp
-        run: ../mcp-publisher login github-oidc
+        working-directory: ${{ steps.resolve.outputs.dir }}
+        run: ${{ github.workspace }}/mcp-publisher login github-oidc
 
-      - name: Publish to the MCP Registry (registers io.github.wimsuenens/gs1belu-mpm)
-        working-directory: mcp
-        run: ../mcp-publisher publish
+      - name: Publish to the MCP Registry
+        working-directory: ${{ steps.resolve.outputs.dir }}
+        run: ${{ github.workspace }}/mcp-publisher publish

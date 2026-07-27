@@ -23,3 +23,9 @@ dist/
 # committed. mcp/.env.example documents the required variable names.
 .env
 mcp/.env
+
+# Vendored shared MCP code (map #76) — a byte-identical copy of
+# mcp/shared/src/_shared/, baked into each publishable server's own package at build
+# time. Never hand-edit; fix mcp/shared/src/_shared/ and rebuild instead.
+mcp/upload/src/gs1belu_mpm_upload/_shared/
+mcp/download/src/gs1belu_mpm_download/_shared/
