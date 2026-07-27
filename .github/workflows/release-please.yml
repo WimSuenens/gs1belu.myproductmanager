@@ -29,9 +29,48 @@ jobs:
           app-id: ${{ vars.RELEASE_PLEASE_APP_ID }}
           private-key: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}
 
+      # Checkout with the app token so the uv.lock sync step below can push to
+      # the release PR branch authenticated as the app (the default GITHUB_TOKEN
+      # would work for a plain push here, but reusing the app identity keeps the
+      # release PR's commits consistent — see the anti-recursion note above).
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+
       - name: release-please
+        id: release-please
         uses: googleapis/release-please-action@v4
         with:
           token: ${{ steps.app-token.outputs.token }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+      # release-please bumps mcp/pyproject.toml (+ server.json) but has no
+      # concept of mcp/uv.lock, which pins the project's own version via its
+      # `source = { editable = "." }` entry. Left alone, the lock drifts one
+      # version behind and the next local `uv` run rewrites that line, producing
+      # a phantom git diff. Re-lock on the release PR branch so the bump lands
+      # atomically with pyproject.toml, in the same PR.
+      - name: Install uv
+        if: ${{ steps.release-please.outputs.pr }}
+        uses: astral-sh/setup-uv@v5
+
+      - name: Sync mcp/uv.lock on the release PR branch
+        if: ${{ steps.release-please.outputs.pr }}
+        env:
+          PR_BRANCH: ${{ fromJson(steps.release-please.outputs.pr).headBranchName }}
+        run: |
+          set -euo pipefail
+          git fetch origin "$PR_BRANCH"
+          git checkout "$PR_BRANCH"
+          uv lock --directory mcp
+          if git diff --quiet -- mcp/uv.lock; then
+            echo "uv.lock already in sync — nothing to commit."
+            exit 0
+          fi
+          git config user.name "gs1belu-release-please[bot]"
+          git config user.email "gs1belu-release-please[bot]@users.noreply.github.com"
+          git add mcp/uv.lock
+          git commit -m "chore(mcp): sync uv.lock with release version bump"
+          git push origin "$PR_BRANCH"
