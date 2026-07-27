@@ -4,10 +4,15 @@
       "type": "http",
       "url": "https://mcp.context7.com/mcp"
     },
-    "gs1belu-mpm": {
+    "gs1belu-mpm-upload": {
       "type": "stdio",
       "command": "uv",
-      "args": ["run", "--project", "mcp", "--env-file", "mcp/.env", "gs1belu-mpm-mcp"]
+      "args": ["run", "--project", "mcp/upload", "--env-file", "mcp/.env", "gs1belu-mpm-upload-mcp"]
+    },
+    "gs1belu-mpm-download": {
+      "type": "stdio",
+      "command": "uv",
+      "args": ["run", "--project", "mcp/download", "--env-file", "mcp/.env", "gs1belu-mpm-download-mcp"]
     }
   }
 }

@@ -108,23 +108,25 @@ def test_csharp_version_source_wired(package_path, csproj_filename):
     )
 
 
-def test_mcp_pyproject_version_source_wired():
-    pyproject = rc.mcp_pyproject()
+@pytest.mark.parametrize("package_path", rc.MCP_PACKAGE_PATHS)
+def test_mcp_pyproject_version_source_wired(package_path):
+    pyproject = rc.mcp_pyproject(package_path)
     version = pyproject.get("project", {}).get("version")
-    assert isinstance(version, str) and version, "mcp/pyproject.toml has no [project].version."
+    assert isinstance(version, str) and version, f"{package_path}/pyproject.toml has no [project].version."
 
 
-def test_mcp_server_json_version_fields_wired_via_extra_files():
-    config = rc.packages()[rc.MCP_PACKAGE]
+@pytest.mark.parametrize("mcp_package", rc.MCP_PACKAGES, ids=lambda p: p["path"])
+def test_mcp_server_json_version_fields_wired_via_extra_files(mcp_package):
+    config = rc.packages()[mcp_package["path"]]
     extra_files = config.get("extra-files", [])
     jsonpaths = {ef.get("jsonpath") for ef in extra_files if ef.get("path") == "server.json"}
     assert jsonpaths == {"$.version", "$.packages[0].version"}, (
-        f"release-please-config.json's 'mcp' package must bump both server.json "
-        f"version fields via extra-files (got jsonpaths={jsonpaths}), or a release "
-        f"would leave server.json claiming a stale version."
+        f"release-please-config.json's '{mcp_package['path']}' package must bump both "
+        f"server.json version fields via extra-files (got jsonpaths={jsonpaths}), or a "
+        f"release would leave server.json claiming a stale version."
     )
 
-    server_json = rc.mcp_server_json()
+    server_json = rc.mcp_server_json(mcp_package["path"])
     assert isinstance(server_json.get("version"), str)
     assert isinstance(server_json.get("packages", [{}])[0].get("version"), str)
 
@@ -176,9 +178,10 @@ def test_csharp_package_ships_its_own_readme(package_path, csproj_filename):
     )
 
 
-def test_mcp_server_json_shape():
-    server_json = rc.mcp_server_json()
-    assert server_json.get("name") == "io.github.WimSuenens/gs1belu-mpm"
+@pytest.mark.parametrize("mcp_package", rc.MCP_PACKAGES, ids=lambda p: p["path"])
+def test_mcp_server_json_shape(mcp_package):
+    server_json = rc.mcp_server_json(mcp_package["path"])
+    assert server_json.get("name") == mcp_package["registry_name"]
     assert server_json.get("description")
     assert server_json.get("version")
 
@@ -186,15 +189,17 @@ def test_mcp_server_json_shape():
     assert isinstance(packages_list, list) and packages_list, "server.json must declare at least one package."
     entry = packages_list[0]
     assert entry.get("registryType") == "pypi"
-    assert entry.get("identifier") == "gs1belu-mpm-mcp"
+    assert entry.get("identifier") == mcp_package["pypi_name"]
     assert entry.get("runtimeHint") == "uvx"
     assert entry.get("transport", {}).get("type") == "stdio"
 
 
-def test_mcp_name_marker_present_in_pypi_facing_readme():
-    assert rc.MCP_NAME_MARKER in rc.mcp_readme_text(), (
-        "mcp/README.md (the README pyproject.toml ships to PyPI) must carry the "
-        f"'{rc.MCP_NAME_MARKER}' marker from the first publish, or MCP-registry "
+@pytest.mark.parametrize("mcp_package", rc.MCP_PACKAGES, ids=lambda p: p["path"])
+def test_mcp_name_marker_present_in_pypi_facing_readme(mcp_package):
+    marker = f"mcp-name: {mcp_package['registry_name']}"
+    assert marker in rc.mcp_readme_text(mcp_package["path"]), (
+        f"{mcp_package['path']}/README.md (the README pyproject.toml ships to PyPI) "
+        f"must carry the '{marker}' marker from the first publish, or MCP-registry "
         f"ownership validation fails without a throwaway version bump to fix it."
     )
 

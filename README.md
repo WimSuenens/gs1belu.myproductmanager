@@ -11,7 +11,7 @@ OpenAPI schemas under [`schemas/`](schemas/).
 
 ## Artifacts
 
-Three artifacts are generated from the same source schemas. None are published yet
+Four artifacts are generated from the same source schemas. None are published yet
 — the links below are where each will land. Per-package READMEs carry the real
 quickstart for each.
 
@@ -19,11 +19,16 @@ quickstart for each.
 |---|---|---|---|
 | **C# SDK** | .NET | NuGet — `dotnet add package …` _(coming soon)_ | [`sdks/`](sdks/) → `dotnet/` |
 | **TypeScript SDK** | TS/JS | npm — `@gs1belu/mpm-upload`, `@gs1belu/mpm-fetch` _(coming soon)_ | [`sdks/`](sdks/) → `typescript/` |
-| **MCP server** | Python | `uvx` / the MCP registry _(coming soon)_ | [`mcp/`](mcp/) |
+| **Upload MCP server** | Python | `uvx gs1belu-mpm-upload-mcp` / the MCP registry _(coming soon)_ | [`mcp/upload/`](mcp/upload/) |
+| **Download MCP server** | Python | `uvx gs1belu-mpm-download-mcp` / the MCP registry _(coming soon)_ | [`mcp/download/`](mcp/download/) |
 
 The two SDKs are generated with [Kiota](https://learn.microsoft.com/openapi/kiota/)
-(one client per API document, never merged). The MCP server builds its tools at
-runtime with FastMCP — no code generation.
+(one client per API document, never merged). The two MCP servers build their tools at
+runtime with FastMCP — no code generation — and are independent, single-role
+processes (map [#82](https://github.com/WimSuenens/gs1belu.myproductmanager/issues/82)):
+a data-supplier installs only the Upload server, a data-recipient only the Download
+one. [`mcp/combined/`](mcp/combined/) is their deprecated, pre-split predecessor —
+see its README for the migration guide.
 
 ## Monorepo map
 
@@ -31,7 +36,8 @@ runtime with FastMCP — no code generation.
 schemas/     Vendor OpenAPI specs + overlays — the single source of truth
   upload/    · download/   (each: v17.yaml vendor original, v17.json, v17.overlay.yaml)
 sdks/        The two Kiota SDKs (dotnet/, typescript/)
-mcp/         The FastMCP MCP server (Python)
+mcp/         The FastMCP MCP servers (Python): shared/, upload/, download/, and the
+             deprecated combined/
 scripts/     Schema-prep build + tests, driven by the justfile
 docs/        ADRs, research, manuals, the schema-ingestion runbook
 justfile     Task front door — `just gen` / `just build` / `just test`

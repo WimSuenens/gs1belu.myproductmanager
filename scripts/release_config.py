@@ -32,8 +32,8 @@ RELEASE_PLEASE_MANIFEST = REPO_ROOT / ".release-please-manifest.json"
 WORKFLOWS_DIR = REPO_ROOT / ".github" / "workflows"
 PUBLISH_WORKFLOWS = ("publish-npm.yml", "publish-csharp.yml", "publish-mcp.yml")
 
-# The five packages release-please manages, as (package-path, kind) — kind drives
-# which version-source/metadata check applies. Kept as one table so a sixth
+# The seven packages release-please manages, as (package-path, kind) — kind drives
+# which version-source/metadata check applies. Kept as one table so an eighth
 # package is a one-line addition here plus a `packages` entry in the config.
 NPM_PACKAGES = (
     "sdks/typescript/packages/mpm-upload",
@@ -43,19 +43,42 @@ CSHARP_PACKAGES = (
     ("sdks/dotnet/Gs1Belu.MyProductManager.Upload", "Gs1Belu.MyProductManager.Upload.csproj"),
     ("sdks/dotnet/Gs1Belu.MyProductManager.Download", "Gs1Belu.MyProductManager.Download.csproj"),
 )
-MCP_PACKAGE = "mcp"
 
-# Every package README a registry will render — the disclaimer must be in all five.
+# The three MCP packages the former single `mcp` package split into (#82): the
+# deprecated combined server plus its two independent successors. Each is its own
+# release-please "python" package, publishing under its own PyPI name and its own
+# `io.github.WimSuenens/...` registry id.
+MCP_PACKAGES = (
+    {
+        "path": "mcp/combined",
+        "component": "mcp",
+        "pypi_name": "gs1belu-mpm-mcp",
+        "registry_name": "io.github.WimSuenens/gs1belu-mpm",
+    },
+    {
+        "path": "mcp/upload",
+        "component": "mcp-upload",
+        "pypi_name": "gs1belu-mpm-upload-mcp",
+        "registry_name": "io.github.WimSuenens/gs1belu-mpm-upload",
+    },
+    {
+        "path": "mcp/download",
+        "component": "mcp-download",
+        "pypi_name": "gs1belu-mpm-download-mcp",
+        "registry_name": "io.github.WimSuenens/gs1belu-mpm-download",
+    },
+)
+MCP_PACKAGE_PATHS = tuple(p["path"] for p in MCP_PACKAGES)
+
+# Every package README a registry will render — the disclaimer must be in all seven.
 PACKAGE_READMES = (
     "sdks/dotnet/Gs1Belu.MyProductManager.Upload/README.md",
     "sdks/dotnet/Gs1Belu.MyProductManager.Download/README.md",
     "sdks/typescript/packages/mpm-upload/README.md",
     "sdks/typescript/packages/mpm-download/README.md",
-    "mcp/README.md",
-)
+) + tuple(f"{p['path']}/README.md" for p in MCP_PACKAGES)
 
 DISCLAIMER_SNIPPET = "not affiliated with, endorsed by, or supported by GS1"
-MCP_NAME_MARKER = "mcp-name: io.github.WimSuenens/gs1belu-mpm"
 
 _yaml = YAML(typ="safe")
 
@@ -124,16 +147,16 @@ def directory_build_props_text() -> str:
     return (REPO_ROOT / "sdks" / "dotnet" / "Directory.Build.props").read_text()
 
 
-def mcp_pyproject() -> dict[str, Any]:
-    return load_toml(REPO_ROOT / "mcp" / "pyproject.toml")
+def mcp_pyproject(package_path: str) -> dict[str, Any]:
+    return load_toml(REPO_ROOT / package_path / "pyproject.toml")
 
 
-def mcp_server_json() -> dict[str, Any]:
-    return load_json(REPO_ROOT / "mcp" / "server.json")
+def mcp_server_json(package_path: str) -> dict[str, Any]:
+    return load_json(REPO_ROOT / package_path / "server.json")
 
 
-def mcp_readme_text() -> str:
-    return (REPO_ROOT / "mcp" / "README.md").read_text()
+def mcp_readme_text(package_path: str) -> str:
+    return (REPO_ROOT / package_path / "README.md").read_text()
 
 
 def package_readme_text(relative_path: str) -> str:

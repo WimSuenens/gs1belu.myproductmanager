@@ -13,7 +13,7 @@ import pytest
 
 from gs1belu_mpm_mcp import specs
 
-_REPO_ROOT = Path(__file__).resolve().parents[2]
+_REPO_ROOT = Path(__file__).resolve().parents[3]
 _PACKAGED_SPECS = Path(__file__).resolve().parents[1] / "src" / "gs1belu_mpm_mcp" / "_specs"
 
 

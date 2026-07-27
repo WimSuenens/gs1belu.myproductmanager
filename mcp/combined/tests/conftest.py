@@ -20,7 +20,7 @@ from gs1belu_mpm_mcp.config import CredentialSet, ServerConfig
 from gs1belu_mpm_mcp.environment import Environment
 from gs1belu_mpm_mcp.server import build_server
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 
 Responder = httpx.Response | Callable[[httpx.Request], httpx.Response]
 

@@ -33,10 +33,44 @@
       "component": "mpm-fetch",
       "package-name": "@gs1belu/mpm-fetch"
     },
-    "mcp": {
+    "mcp/combined": {
       "release-type": "python",
       "component": "mcp",
       "package-name": "gs1belu-mpm-mcp",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "server.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "server.json",
+          "jsonpath": "$.packages[0].version"
+        }
+      ]
+    },
+    "mcp/upload": {
+      "release-type": "python",
+      "component": "mcp-upload",
+      "package-name": "gs1belu-mpm-upload-mcp",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "server.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "server.json",
+          "jsonpath": "$.packages[0].version"
+        }
+      ]
+    },
+    "mcp/download": {
+      "release-type": "python",
+      "component": "mcp-download",
+      "package-name": "gs1belu-mpm-download-mcp",
       "extra-files": [
         {
           "type": "json",
