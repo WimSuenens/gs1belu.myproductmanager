@@ -59,7 +59,12 @@ jobs:
       - name: Sync mcp/uv.lock on the release PR branch
         if: ${{ steps.release-please.outputs.pr }}
         env:
-          PR_BRANCH: ${{ fromJson(steps.release-please.outputs.pr).headBranchName }}
+          # `pr` is an empty string on runs with no pending release PR (e.g. the
+          # run that merges the release PR). Step-level env is evaluated even
+          # when `if:` is falsy, so calling fromJson('') here fails the whole job
+          # with "Error reading JToken from JsonReader". Short-circuit on the
+          # empty string so fromJson only runs when there's actually a PR.
+          PR_BRANCH: ${{ steps.release-please.outputs.pr && fromJson(steps.release-please.outputs.pr).headBranchName || '' }}
         run: |
           set -euo pipefail
           git fetch origin "$PR_BRANCH"
