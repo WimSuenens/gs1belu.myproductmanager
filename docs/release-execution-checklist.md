@@ -2,10 +2,13 @@
 
 Everything release-please and the three `publish-*.yml` workflows need to actually
 fire is **configured** by [#53](https://github.com/WimSuenens/gs1belu.myproductmanager/issues/53).
-None of it is **activated** yet — that's a deliberate scope line (see the issue's
-"Out of Scope" section): a live OIDC publish can't be exercised in CI without really
-publishing, so the human steps below are a one-time, manual, checked-off-by-hand
-sequence, not something a merge triggers automatically.
+Most of it wasn't **activated** yet as of this writing — that's a deliberate scope
+line (see the issue's "Out of Scope" section): a live OIDC publish can't be exercised
+in CI without really publishing, so the human steps below are a one-time, manual,
+checked-off-by-hand sequence, not something a merge triggers automatically. §5's MCP
+publishing has since partially activated (see below) — the pattern generalizes: each
+package needs its own trust relationship registered independently before its first
+tag can publish.
 
 Until every item below is done, the workflows fail **safely and visibly** (a red X
 in the Actions tab, an auth error) rather than silently publishing something wrong.
@@ -94,9 +97,9 @@ project needs its **own** pending-publisher registration; all three point at the
 workflow filename and environment name, since that's the one workflow that resolves
 which package to build from the tag prefix.
 
-- [ ] `gs1belu-mpm-mcp` (the combined server, `mcp-v*`).
-- [ ] `gs1belu-mpm-upload-mcp` (`mcp-upload-v*`).
-- [ ] `gs1belu-mpm-download-mcp` (`mcp-download-v*`).
+- [x] `gs1belu-mpm-mcp` (the combined server, `mcp-v*`) — confirmed live: `mcp-v0.4.0` published successfully.
+- [x] `gs1belu-mpm-upload-mcp` (`mcp-upload-v*`) — confirmed live: `mcp-upload-v0.2.0` published successfully.
+- [ ] `gs1belu-mpm-download-mcp` (`mcp-download-v*`) — **not yet registered**: `mcp-download-v0.2.0`'s publish job failed with `403 Invalid API Token: OIDC scoped token is not valid for project 'gs1belu-mpm-download-mcp'`, confirming no pending publisher exists for this project name yet. Once registered, re-run the failed job (`gh run rerun <run-id> --failed`) rather than pushing a new tag.
 
 For each project: log into pypi.org → account sidebar → **Publishing** (not a
 project sidebar — the project doesn't exist yet) → **GitHub Actions** tab → fill in:
