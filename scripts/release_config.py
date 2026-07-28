@@ -32,8 +32,8 @@ RELEASE_PLEASE_MANIFEST = REPO_ROOT / ".release-please-manifest.json"
 WORKFLOWS_DIR = REPO_ROOT / ".github" / "workflows"
 PUBLISH_WORKFLOWS = ("publish-npm.yml", "publish-csharp.yml", "publish-mcp.yml")
 
-# The seven packages release-please manages, as (package-path, kind) — kind drives
-# which version-source/metadata check applies. Kept as one table so an eighth
+# The six packages release-please manages, as (package-path, kind) — kind drives
+# which version-source/metadata check applies. Kept as one table so a seventh
 # package is a one-line addition here plus a `packages` entry in the config.
 NPM_PACKAGES = (
     "sdks/typescript/packages/mpm-upload",
@@ -44,17 +44,17 @@ CSHARP_PACKAGES = (
     ("sdks/dotnet/Gs1Belu.MyProductManager.Download", "Gs1Belu.MyProductManager.Download.csproj"),
 )
 
-# The three MCP packages the former single `mcp` package split into (#82): the
-# deprecated combined server plus its two independent successors. Each is its own
-# release-please "python" package, publishing under its own PyPI name and its own
-# `io.github.WimSuenens/...` registry id.
+# The two independent MCP packages the former single `mcp` package split into (#82).
+# Each is its own release-please "python" package, publishing under its own PyPI name
+# and its own `io.github.WimSuenens/...` registry id.
+#
+# The deprecated combined server (`mcp`, `gs1belu-mpm-mcp`) was retired in #87 after
+# its final `0.4.0` cut: its release-please component, `mcp-v*` publish trigger, and
+# manifest entry are all gone, so it is no longer a release-managed package and drops
+# out of this table (and every check derived from it). Its source stays under
+# `mcp/combined/` as the archived-not-deleted PyPI package, still exercised by
+# `just test-mcp`, but nothing re-publishes it.
 MCP_PACKAGES = (
-    {
-        "path": "mcp/combined",
-        "component": "mcp",
-        "pypi_name": "gs1belu-mpm-mcp",
-        "registry_name": "io.github.WimSuenens/gs1belu-mpm",
-    },
     {
         "path": "mcp/upload",
         "component": "mcp-upload",
@@ -70,7 +70,7 @@ MCP_PACKAGES = (
 )
 MCP_PACKAGE_PATHS = tuple(p["path"] for p in MCP_PACKAGES)
 
-# Every package README a registry will render — the disclaimer must be in all seven.
+# Every package README a registry will render — the disclaimer must be in all six.
 PACKAGE_READMES = (
     "sdks/dotnet/Gs1Belu.MyProductManager.Upload/README.md",
     "sdks/dotnet/Gs1Belu.MyProductManager.Download/README.md",

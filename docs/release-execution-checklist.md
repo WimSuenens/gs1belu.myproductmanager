@@ -88,16 +88,17 @@ is what pushes the tags and fires the publish workflows below.
   swap in the commented fallback step in `publish-csharp.yml` (drop-in — only
   the `--api-key` source changes).
 
-## 5. PyPI + MCP Registry (`publish-mcp.yml` — `mcp-v*` / `mcp-upload-v*` / `mcp-download-v*`)
+## 5. PyPI + MCP Registry (`publish-mcp.yml` — `mcp-upload-v*` / `mcp-download-v*`)
 
-One parameterized workflow (`publish-mcp.yml`) publishes **three** independent PyPI
-projects — the deprecated combined server plus its two successors (map
+One parameterized workflow (`publish-mcp.yml`) publishes the **two** independent PyPI
+projects the combined server split into (map
 [#82](https://github.com/WimSuenens/gs1belu.myproductmanager/issues/82)). Each PyPI
-project needs its **own** pending-publisher registration; all three point at the same
+project needs its **own** pending-publisher registration; both point at the same
 workflow filename and environment name, since that's the one workflow that resolves
-which package to build from the tag prefix.
+which package to build from the tag prefix. (The deprecated combined server published
+its final `0.4.0` and was then retired — its `mcp-v*` trigger is gone; see §7.)
 
-- [x] `gs1belu-mpm-mcp` (the combined server, `mcp-v*`) — confirmed live: `mcp-v0.4.0` published successfully.
+- [x] `gs1belu-mpm-mcp` (the combined server, `mcp-v*`) — confirmed live: `mcp-v0.4.0` published successfully, then **retired** (§7).
 - [x] `gs1belu-mpm-upload-mcp` (`mcp-upload-v*`) — confirmed live: `mcp-upload-v0.2.0` published successfully.
 - [x] `gs1belu-mpm-download-mcp` (`mcp-download-v*`) — confirmed live: after registering the publisher, re-running the initially-failed `mcp-download-v0.2.0` job (`gh run rerun <run-id> --failed`, no new tag needed) published successfully.
 
@@ -147,3 +148,61 @@ You can do §2 first and §3–§5 later, package by package — nothing forces 
 three registries to go live at once. A package whose registry trust isn't set up
 yet will just fail its publish job with an auth error when its tag is pushed,
 with no effect on the other packages.
+
+## 7. Retiring the combined server (`gs1belu-mpm-mcp`, #87)
+
+Retire the combined server **cleanly** now that its two successors are live: existing
+installs keep working — this deprecates and redirects, it does not break. The order is
+forced (per [#80](https://github.com/WimSuenens/gs1belu.myproductmanager/issues/80));
+each step below assumes the one above is done.
+
+- [x] **1. Successors published** (`0.1.0`) — [#86](https://github.com/WimSuenens/gs1belu.myproductmanager/issues/86).
+- [x] **2. Final `gs1belu-mpm-mcp` `0.4.0` cut** — deprecation banner + migration guide
+      in `mcp/combined/README.md`, `Development Status :: 7 - Inactive` in
+      `mcp/combined/pyproject.toml`; landed in
+      [#91](https://github.com/WimSuenens/gs1belu.myproductmanager/pull/91), confirmed
+      live on PyPI.
+- [ ] **3. PyPI-archive the combined package** — **archive, not yank** (per
+      [#74](https://github.com/WimSuenens/gs1belu.myproductmanager/issues/74)): a
+      pinned `gs1belu-mpm-mcp==0.4.0` must still resolve and install. Live maintainer
+      action, PyPI web UI only (no OIDC/API path): log in → the **`gs1belu-mpm-mcp`**
+      project → **Manage** → **Settings** → **Archive project** (bottom of the page).
+      Archiving marks the project read-only and flags it as archived on its PyPI page
+      while leaving every release downloadable; yanking (which you are **not** doing)
+      would hide it from resolvers and break pins.
+- [ ] **4. Registry-deprecate `io.github.WimSuenens/gs1belu-mpm`** — set the existing
+      registry entry to `deprecated` (do **not** delete it) via `mcp-publisher status`
+      (the same binary the publish workflow pins; grab it from the
+      [registry releases](https://github.com/modelcontextprotocol/registry/releases) if
+      you don't have it locally). The registry has no structured superseded-by field, so
+      name **both** successor IDs in the free-text message. Live maintainer action, run
+      from a local terminal:
+
+      ```sh
+      # Local login is the INTERACTIVE device flow, NOT `github-oidc` (that only works
+      # inside GitHub Actions, where it reads the Actions OIDC token). This opens a
+      # github.com/login/device page for you to enter a code.
+      mcp-publisher login github
+
+      # --all-versions marks the whole server entry deprecated (its registry-latest is
+      # 0.2.2; 0.4.0 was a PyPI-only cut, never published to the registry). Server name
+      # is positional; -y skips the confirm prompt.
+      mcp-publisher status \
+        --status deprecated \
+        --all-versions \
+        --message "Deprecated: split into io.github.WimSuenens/gs1belu-mpm-upload and io.github.WimSuenens/gs1belu-mpm-download. See the migration guide in mcp/combined/README.md." \
+        io.github.WimSuenens/gs1belu-mpm
+      ```
+
+      Verify afterwards: `curl -s "https://registry.modelcontextprotocol.io/v0/servers?search=gs1belu-mpm"`
+      should report the entry's status as `deprecated`.
+- [ ] **5. Remove the `mcp` release-please component + `mcp-v*` trigger** — **only after
+      steps 3 and 4 above.** This is the code change in the retirement PR (config,
+      manifest, `publish-mcp.yml` trigger, and `scripts/release_config.py`'s
+      `MCP_PACKAGES` table, kept consistent by `just release-assert`). ⚠️ **Do not
+      merge that PR until steps 3 and 4 are confirmed done** — until the retirement is
+      final, keeping the `mcp-v*` trigger is the safety margin that still lets a
+      `0.4.x` patch be cut if one is ever needed.
+
+The combined server's **source stays** under `mcp/combined/` (it's the archived-not-
+deleted package and is still exercised by `just test-mcp`); nothing re-publishes it.
