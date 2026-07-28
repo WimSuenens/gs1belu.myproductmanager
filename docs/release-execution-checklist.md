@@ -171,17 +171,27 @@ each step below assumes the one above is done.
       while leaving every release downloadable; yanking (which you are **not** doing)
       would hide it from resolvers and break pins.
 - [ ] **4. Registry-deprecate `io.github.WimSuenens/gs1belu-mpm`** — set the existing
-      registry entry to `deprecated` (do **not** delete it). The registry has no
-      structured superseded-by field, so name **both** successor IDs in the free-text
-      message. Live maintainer action (authenticate as the repo via GitHub OIDC, same
-      `mcp-publisher` binary the publish workflow pins):
+      registry entry to `deprecated` (do **not** delete it) via `mcp-publisher status`
+      (the same binary the publish workflow pins; grab it from the
+      [registry releases](https://github.com/modelcontextprotocol/registry/releases) if
+      you don't have it locally). The registry has no structured superseded-by field, so
+      name **both** successor IDs in the free-text message. Live maintainer action, run
+      from a local terminal:
 
       ```sh
-      mcp-publisher login github-oidc
+      # Local login is the INTERACTIVE device flow, NOT `github-oidc` (that only works
+      # inside GitHub Actions, where it reads the Actions OIDC token). This opens a
+      # github.com/login/device page for you to enter a code.
+      mcp-publisher login github
+
+      # --all-versions marks the whole server entry deprecated (its registry-latest is
+      # 0.2.2; 0.4.0 was a PyPI-only cut, never published to the registry). Server name
+      # is positional; -y skips the confirm prompt.
       mcp-publisher status \
         --status deprecated \
-        io.github.WimSuenens/gs1belu-mpm \
-        --message "Deprecated: split into io.github.WimSuenens/gs1belu-mpm-upload and io.github.WimSuenens/gs1belu-mpm-download. See the migration guide in mcp/combined/README.md."
+        --all-versions \
+        --message "Deprecated: split into io.github.WimSuenens/gs1belu-mpm-upload and io.github.WimSuenens/gs1belu-mpm-download. See the migration guide in mcp/combined/README.md." \
+        io.github.WimSuenens/gs1belu-mpm
       ```
 
       Verify afterwards: `curl -s "https://registry.modelcontextprotocol.io/v0/servers?search=gs1belu-mpm"`
