@@ -32,8 +32,8 @@ RELEASE_PLEASE_MANIFEST = REPO_ROOT / ".release-please-manifest.json"
 WORKFLOWS_DIR = REPO_ROOT / ".github" / "workflows"
 PUBLISH_WORKFLOWS = ("publish-npm.yml", "publish-csharp.yml", "publish-mcp.yml")
 
-# The seven packages release-please manages, as (package-path, kind) — kind drives
-# which version-source/metadata check applies. Kept as one table so an eighth
+# The six packages release-please manages, as (package-path, kind) — kind drives
+# which version-source/metadata check applies. Kept as one table so a seventh
 # package is a one-line addition here plus a `packages` entry in the config.
 NPM_PACKAGES = (
     "sdks/typescript/packages/mpm-upload",
@@ -70,7 +70,7 @@ MCP_PACKAGES = (
 )
 MCP_PACKAGE_PATHS = tuple(p["path"] for p in MCP_PACKAGES)
 
-# Every package README a registry will render — the disclaimer must be in all seven.
+# Every package README a registry will render — the disclaimer must be in all six.
 PACKAGE_READMES = (
     "sdks/dotnet/Gs1Belu.MyProductManager.Upload/README.md",
     "sdks/dotnet/Gs1Belu.MyProductManager.Download/README.md",
