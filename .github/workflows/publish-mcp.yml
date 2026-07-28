@@ -1,10 +1,15 @@
 name: Publish MCP server
 
-# Triggers on any of the three `mcp*-v*` tags release-please derives for the `mcp`,
-# `mcp-upload`, and `mcp-download` components (see release-please-config.json, #82).
-# One parameterized workflow instead of three near-duplicates: a `case $REF_NAME`
+# Triggers on either `mcp-upload-v*` / `mcp-download-v*` tag release-please derives
+# for the `mcp-upload` and `mcp-download` components (see release-please-config.json,
+# #82). One parameterized workflow instead of two near-duplicates: a `case $REF_NAME`
 # step resolves which package directory/PyPI project the tag belongs to, then the
 # rest of the job runs unparameterized against that resolved directory.
+#
+# The deprecated combined server (`mcp`, `gs1belu-mpm-mcp`) was retired in #87 after
+# its final `0.4.0` cut: its release-please component and `mcp-v*` trigger are gone,
+# so this workflow no longer publishes it. Its source stays in `mcp/combined/` (the
+# archived-not-deleted PyPI package), but nothing re-publishes it.
 #
 # One job, two sequential OIDC-gated steps per publish — PyPI publish, then
 # MCP-registry publish — so the registry step only runs if the PyPI publish it
@@ -19,7 +24,6 @@ name: Publish MCP server
 on:
   push:
     tags:
-      - 'mcp-v*'
       - 'mcp-upload-v*'
       - 'mcp-download-v*'
 
@@ -35,8 +39,7 @@ jobs:
       url: >-
         ${{
           startsWith(github.ref_name, 'mcp-upload-v') && 'https://pypi.org/p/gs1belu-mpm-upload-mcp' ||
-          startsWith(github.ref_name, 'mcp-download-v') && 'https://pypi.org/p/gs1belu-mpm-download-mcp' ||
-          'https://pypi.org/p/gs1belu-mpm-mcp'
+          'https://pypi.org/p/gs1belu-mpm-download-mcp'
         }}
     steps:
       - uses: actions/checkout@v4
@@ -58,9 +61,6 @@ jobs:
             mcp-download-v*)
               echo "dir=mcp/download" >> "$GITHUB_OUTPUT"
               ;;
-            mcp-v*)
-              echo "dir=mcp/combined" >> "$GITHUB_OUTPUT"
-              ;;
             *)
               echo "::error::publish-mcp: unrecognized tag '$REF_NAME' — no package directory mapping."
               exit 1
@@ -69,9 +69,9 @@ jobs:
 
       # hatch_build.py's CustomBuildHook copies these into the wheel/sdist at build
       # time (#70) — they must exist on disk before `uv build` runs, same as the `mcp`
-      # job in ci.yml. Only mcp/upload and mcp/combined actually consume this (#75's
-      # Download server bundles no spec), but building it unconditionally is simpler
-      # than a second tag-based branch and costs nothing when unused.
+      # job in ci.yml. Only mcp/upload actually consumes this (#75's Download server
+      # bundles no spec), but building it unconditionally is simpler than a second
+      # tag-based branch and costs nothing when unused.
       - name: Build effective specs (just gen-schemas)
         run: just gen-schemas
 

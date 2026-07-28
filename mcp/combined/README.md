@@ -295,13 +295,17 @@ Python analog of the SDKs' fake-transport seam). See [`tests/`](tests/):
 
 ## Publishing
 
-Release-and-publish machinery — `server.json`, the `mcp-name` README marker above,
-`publish-mcp.yml`'s PyPI + MCP-registry OIDC publish (parameterized across all three
-`mcp*` packages, #82), and the release-please `mcp` component/tag (`mcp-v*`) — is
-configured per [#53](https://github.com/WimSuenens/gs1belu.myproductmanager/issues/53).
-The published sdist and wheel bundle the effective specs directly (#70), via
-`hatch_build.py` + `pyproject.toml`'s `artifacts` force-include, so `uvx
-gs1belu-mpm-mcp` needs no repo checkout at all.
+**Retired (#87).** This package published its final `0.4.0` deprecation release and
+is no longer release-managed: its release-please `mcp` component, its `mcp-v*` publish
+trigger, and its `.release-please-manifest.json` entry were removed once `0.4.0` was
+live and the PyPI/registry retirement steps were taken. `publish-mcp.yml` now
+publishes only the two successors (`mcp-upload-v*` / `mcp-download-v*`). The historical
+machinery — `server.json`, the `mcp-name` README marker above, and the OIDC PyPI +
+MCP-registry publish — was configured per
+[#53](https://github.com/WimSuenens/gs1belu.myproductmanager/issues/53); the published
+`0.4.0` sdist and wheel bundle the effective specs directly (#70), via `hatch_build.py`
++ `pyproject.toml`'s `artifacts` force-include, so a pinned `uvx gs1belu-mpm-mcp==0.4.0`
+still needs no repo checkout at all.
 
 That spec stops **below the first live publish**: registering the PyPI pending
 publisher, the GitHub App, and the MCP registry namespace are human-run,
